@@ -3,7 +3,7 @@ import datetime
 import re
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryFile
 """ A simple python package for turning django models into csvs """
 
 
@@ -18,7 +18,7 @@ def make_csv_response(queryset,
 def make_csv_file(queryset,
                   filename=None,
                   append_timestamp=False):
-    csv_file = open('/tmp/csv_export', 'w')
+    csv_file = TemporaryFile()
     _write_csv_data(queryset, csv_file)
     return csv_file
 
@@ -53,12 +53,12 @@ def _get_header_row_from_queryset(qs):
     except StopIteration:
         raise CSVException("Empty queryset provided to exporter.")
 
-def _get_filename_from_queryset(queryset):
+def generate_filename(queryset):
     """
     Takes a queryset and returns a default
     base filename based on the underlying data
     """
-    return slugify(queryset.model.__name__) + "_export"
+    return slugify(unicode(queryset.model.__name__)) + "_export.csv"
 
 ########################################
 # filename/response utility functions
@@ -68,7 +68,7 @@ def _make_empty_csv_response(filename=None,
                       append_timestamp=False):
     # if they don't pass a filename, build one from the queryset underlying class
     if not filename:
-        filename = _get_filename_from_queryset(filename)
+        filename = generate_filename(filename)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; %s;' % filename_param
@@ -92,3 +92,4 @@ def _timestamp_filename(filename):
     
     formatted_datestring = datetime.date.today().strftime("%Y%m%d")
     return '%s_%s' % (filename, formatted_datestring)
+
