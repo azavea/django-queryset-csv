@@ -4,76 +4,79 @@ import re
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from tempfile import TemporaryFile
+from cStringIO import StringIO
 """ A simple python package for turning django models into csvs """
 
+########################################
+# public functions
+########################################
 
-def make_csv_response(queryset,
-                      filename=None,
-                      append_timestamp=False):
-    response = _make_empty_csv_response(filename=filename,
-                                        append_timestamp=False)
+def render_to_csv_response(queryset, filename=None, append_timestamp=False):
+    """
+    provides the boilerplate for making a CSV http response.
+    takes a filename or generates one from the queryset's model.
+    """
+
+    if not filename:
+        filename = generate_filename(queryset)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; %s;' % filename_param
+
     _write_csv_data(queryset, response)
+
     return response
 
-def make_csv_file(queryset,
-                  filename=None,
-                  append_timestamp=False):
-    csv_file = TemporaryFile()
+def create_csv(queryset, in_memory=False):
+    """
+    Takes a queryset and returns a file-like object of CSV data.
+    """
+    if in_memory:
+        csv_file = StringIO()
+    else:
+        csv_file = TemporaryFile()
+
     _write_csv_data(queryset, csv_file)
+
     return csv_file
 
-def _write_csv_data(qs, obj):
-    writer = csv.DictWriter(obj, _get_header_row_from_queryset(qs))
-    writer.writeheader()
-    for record in qs.values():
-        record = _sanitize_unicode_record(record)
-        writer.writerow(record)
+def generate_filename(queryset, append_timestamp=False):
+    """
+    Takes a queryset and returns a default
+    base filename based on the underlying model
+    """
+    base_filename = slugify(unicode(queryset.model.__name__)) + 'export'
 
-def _sanitize_unicode_record(record):
-    obj = {}
-    for key, val in record.iteritems():
-        if val:
-            if isinstance(val, unicode):
-                newval = val.encode("utf-8")
-            else:
-                newval = str(val)
-            obj[key] = newval
-    return obj
+    if append_timestamp:
+        base_filename = _timestamp_filename(base_filename)
+
+    return base_filename + '.csv'
+
 
 ########################################
-# queryset reader functions
+# queryset reader/csv writer functions
 ########################################
 
 class CSVException(Exception):
     pass
 
-def _get_header_row_from_queryset(qs):
+def _write_csv_data(queryset, file_obj, verbose_field_names=None):
+
+    writer = csv.DictWriter(file_obj, _get_header_row_from_queryset(queryset))
+    writer.writeheader()
+    for record in queryset.values():
+        record = _sanitize_unicode_record(record)
+        writer.writerow(record)
+
+def _get_header_row_from_queryset(queryset):
     try:
-        return next(qs.values().iterator()).keys()
-    except StopIteration:
+        return queryset.values().field_names
+    except AttributeError:
         raise CSVException("Empty queryset provided to exporter.")
 
-def generate_filename(queryset):
-    """
-    Takes a queryset and returns a default
-    base filename based on the underlying data
-    """
-    return slugify(unicode(queryset.model.__name__)) + "_export.csv"
-
 ########################################
-# filename/response utility functions
+# utility functions
 ########################################
-
-def _make_empty_csv_response(filename=None,
-                      append_timestamp=False):
-    # if they don't pass a filename, build one from the queryset underlying class
-    if not filename:
-        filename = generate_filename(filename)
-
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; %s;' % filename_param
-
-    return response
 
 def _validate_and_clean_filename(filename):
 
@@ -86,7 +89,25 @@ def _validate_and_clean_filename(filename):
     filename = slugify(filename)
     return filename
 
+def _sanitize_unicode_record(record):
+    obj = {}
+    for key, val in record.iteritems():
+        if val:
+            if isinstance(val, unicode):
+                newval = val.encode("utf-8")
+            else:
+                newval = str(val)
+            obj[key] = newval
+    return obj
+
 def _timestamp_filename(filename):
+    """
+    takes a filename and returns a new filename with the
+    current formatted date appended to it.
+
+    raises an exception if it receives a filename with an exception.
+    validation/preprocessing must be called separately.
+    """
     if filename != _validate_and_clean_filename:
         raise ValidationError('cannot timestamp unvalidated filename')
     
