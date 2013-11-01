@@ -13,14 +13,18 @@ from cStringIO import StringIO
 ########################################
 
 
-def render_to_csv_response(queryset, filename=None, append_timestamp=False):
+def render_to_csv_response(queryset, filename=None, append_datestamp=False):
     """
     provides the boilerplate for making a CSV http response.
     takes a filename or generates one from the queryset's model.
     """
-
-    if not filename:
-        filename = generate_filename(queryset)
+    if filename:
+        filename = _validate_and_clean_filename(filename)
+        if append_datestamp:
+            filename = _append_datestamp(filename)
+    else:
+        filename = generate_filename(queryset,
+                                     append_datestamp=append_datestamp)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=%s;' % filename
@@ -45,15 +49,15 @@ def create_csv(queryset, in_memory=False):
     return csv_file
 
 
-def generate_filename(queryset, append_timestamp=False):
+def generate_filename(queryset, append_datestamp=False):
     """
     Takes a queryset and returns a default
     base filename based on the underlying model
     """
     base_filename = slugify(unicode(queryset.model.__name__)) + 'export'
 
-    if append_timestamp:
-        base_filename = _timestamp_filename(base_filename)
+    if append_datestamp:
+        base_filename = _datestamp_filename(base_filename)
 
     return base_filename + '.csv'
 
@@ -97,7 +101,7 @@ def _validate_and_clean_filename(filename):
         else:
             filename = filename[:-4]
 
-    filename = slugify(filename)
+    filename = slugify(unicode(filename)) + '.csv'
     return filename
 
 
@@ -117,16 +121,16 @@ def _sanitize_unicode_record(record):
     return obj
 
 
-def _timestamp_filename(filename):
+def _append_datestamp(filename):
     """
     takes a filename and returns a new filename with the
     current formatted date appended to it.
 
-    raises an exception if it receives a filename with an exception.
+    raises an exception if it receives an unclean filename.
     validation/preprocessing must be called separately.
     """
-    if filename != _validate_and_clean_filename:
-        raise ValidationError('cannot timestamp unvalidated filename')
+    if filename != _validate_and_clean_filename(filename):
+        raise ValidationError('cannot datestamp unvalidated filename')
 
     formatted_datestring = datetime.date.today().strftime("%Y%m%d")
-    return '%s_%s' % (filename, formatted_datestring)
+    return '%s_%s.csv' % (filename[:-3], formatted_datestring)
