@@ -71,6 +71,10 @@ class CSVException(Exception):
 
 
 def _write_csv_data(queryset, file_obj, verbose_field_names=None):
+
+    # add BOM to suppor CSVs in MS Excel
+    file_obj.write(u'\ufeff'.encode('utf8'))
+
     if isinstance(queryset, ValuesQuerySet):
         values_qs = queryset
     else:
