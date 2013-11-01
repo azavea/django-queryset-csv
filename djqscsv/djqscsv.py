@@ -1,6 +1,5 @@
 import csv
 import datetime
-import re
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.http import HttpResponse
@@ -12,6 +11,7 @@ from cStringIO import StringIO
 ########################################
 # public functions
 ########################################
+
 
 def render_to_csv_response(queryset, filename=None, append_timestamp=False):
     """
@@ -30,6 +30,7 @@ def render_to_csv_response(queryset, filename=None, append_timestamp=False):
 
     return response
 
+
 def create_csv(queryset, in_memory=False):
     """
     Takes a queryset and returns a file-like object of CSV data.
@@ -42,6 +43,7 @@ def create_csv(queryset, in_memory=False):
     _write_csv_data(queryset, csv_file)
 
     return csv_file
+
 
 def generate_filename(queryset, append_timestamp=False):
     """
@@ -62,6 +64,7 @@ def generate_filename(queryset, append_timestamp=False):
 
 class CSVException(Exception):
     pass
+
 
 def _write_csv_data(queryset, file_obj, verbose_field_names=None):
     if isinstance(queryset, ValuesQuerySet):
@@ -85,6 +88,7 @@ def _write_csv_data(queryset, file_obj, verbose_field_names=None):
 # utility functions
 ########################################
 
+
 def _validate_and_clean_filename(filename):
 
     if filename.count('.'):
@@ -95,6 +99,7 @@ def _validate_and_clean_filename(filename):
 
     filename = slugify(filename)
     return filename
+
 
 def _sanitize_unicode_record(record):
     obj = {}
@@ -107,6 +112,7 @@ def _sanitize_unicode_record(record):
             obj[key] = newval
     return obj
 
+
 def _timestamp_filename(filename):
     """
     takes a filename and returns a new filename with the
@@ -117,7 +123,6 @@ def _timestamp_filename(filename):
     """
     if filename != _validate_and_clean_filename:
         raise ValidationError('cannot timestamp unvalidated filename')
-    
+
     formatted_datestring = datetime.date.today().strftime("%Y%m%d")
     return '%s_%s' % (filename, formatted_datestring)
-

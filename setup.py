@@ -1,5 +1,5 @@
 from distutils.core import setup
-import setuptools
+import setuptools  # NOQA
 
 setup(
     name='Django Queryset CSV Writer',

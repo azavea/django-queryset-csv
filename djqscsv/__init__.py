@@ -1,2 +1,2 @@
-from djqscsv import (render_to_csv_response, create_csv,
-                             generate_filename, CSVException)
+from djqscsv import (render_to_csv_response, create_csv,  # NOQA
+                             generate_filename, CSVException)  # NOQA
