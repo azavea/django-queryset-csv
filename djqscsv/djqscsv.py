@@ -102,14 +102,18 @@ def _validate_and_clean_filename(filename):
 
 
 def _sanitize_unicode_record(record):
+
+    def _sanitize_value(value):
+        if isinstance(val, unicode):
+            return value.encode("utf-8")
+        else:
+            return str(value)
+
     obj = {}
     for key, val in record.iteritems():
         if val:
-            if isinstance(val, unicode):
-                newval = val.encode("utf-8")
-            else:
-                newval = str(val)
-            obj[key] = newval
+            obj[_sanitize_value(key)] = _sanitize_value(val)
+
     return obj
 
 
