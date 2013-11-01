@@ -3,6 +3,7 @@ import datetime
 import re
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
+from django.db.models.query import ValuesQuerySet
 from tempfile import TemporaryFile
 from cStringIO import StringIO
 """ A simple python package for turning django models into csvs """
@@ -61,18 +62,22 @@ class CSVException(Exception):
     pass
 
 def _write_csv_data(queryset, file_obj, verbose_field_names=None):
+    if isinstance(queryset, ValuesQuerySet):
+        values_qs = queryset
+    else:
+        values_qs = queryset.values()
 
-    writer = csv.DictWriter(file_obj, _get_header_row_from_queryset(queryset))
-    writer.writeheader()
-    for record in queryset.values():
-        record = _sanitize_unicode_record(record)
-        writer.writerow(record)
-
-def _get_header_row_from_queryset(queryset):
     try:
-        return queryset.values().field_names
+        header_row = values_qs.field_names
     except AttributeError:
         raise CSVException("Empty queryset provided to exporter.")
+
+    writer = csv.DictWriter(file_obj, header_row)
+    writer.writeheader()
+
+    for record in values_qs:
+        record = _sanitize_unicode_record(record)
+        writer.writerow(record)
 
 ########################################
 # utility functions
