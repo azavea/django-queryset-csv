@@ -3,6 +3,7 @@ import datetime
 import re
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
+from django.http import HttpResponse
 from django.db.models.query import ValuesQuerySet
 from tempfile import TemporaryFile
 from cStringIO import StringIO
