@@ -24,6 +24,7 @@ def render_to_csv_response(queryset, filename=None, append_timestamp=False):
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=%s;' % filename
+    response['Cache-Control'] = 'no-cache'
 
     _write_csv_data(queryset, response)
 
