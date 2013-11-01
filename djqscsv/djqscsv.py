@@ -21,7 +21,7 @@ def render_to_csv_response(queryset, filename=None, append_timestamp=False):
         filename = generate_filename(queryset)
 
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; %s;' % filename_param
+    response['Content-Disposition'] = 'attachment; %s;' % filename
 
     _write_csv_data(queryset, response)
 
