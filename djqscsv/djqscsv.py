@@ -57,7 +57,7 @@ def generate_filename(queryset, append_datestamp=False):
     base_filename = slugify(unicode(queryset.model.__name__)) + 'export'
 
     if append_datestamp:
-        base_filename = _datestamp_filename(base_filename)
+        base_filename = _append_datestamp(base_filename)
 
     return base_filename + '.csv'
 
