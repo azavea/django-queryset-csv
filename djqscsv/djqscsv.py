@@ -1,11 +1,20 @@
 import csv
 import datetime
+
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.http import HttpResponse
+
+from django.conf import settings
+if not settings.configured:
+    # required to import ValuesQuerySet
+    settings.configure()
+
 from django.db.models.query import ValuesQuerySet
+
 from tempfile import TemporaryFile
 from cStringIO import StringIO
+
 """ A simple python package for turning django models into csvs """
 
 ########################################
@@ -137,4 +146,4 @@ def _append_datestamp(filename):
         raise ValidationError('cannot datestamp unvalidated filename')
 
     formatted_datestring = datetime.date.today().strftime("%Y%m%d")
-    return '%s_%s.csv' % (filename[:-3], formatted_datestring)
+    return '%s_%s.csv' % (filename[:-4], formatted_datestring)
