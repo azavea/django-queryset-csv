@@ -1,5 +1,8 @@
 django-queryset-csv
 ===================
+[![Build Status](https://travis-ci.org/azavea/django-queryset-csv.png)](https://travis-ci.org/azavea/django-queryset-csv)
+[![Coverage Status](https://coveralls.io/repos/azavea/django-queryset-csv/badge.png)](https://coveralls.io/r/azavea/django-queryset-csv)
+
 
 a CSV exporter for django querysets.
 
@@ -55,6 +58,5 @@ def csv_view(request):
 django-queryset-csv will be ready for stable release when the following are complete:
 
 1. unit test coverage reaches 100%
-2. test coverage is tracked by a CI server
-3. custom column headers are supported (currently column headers are always field names)
-4. the package is uploaded to pypi.
+2. custom column headers are supported (currently column headers are always field names)
+3. The package can be easily deployed to PyPI.
