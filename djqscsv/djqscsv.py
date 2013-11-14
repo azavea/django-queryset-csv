@@ -137,4 +137,4 @@ def _append_datestamp(filename):
         raise ValidationError('cannot datestamp unvalidated filename')
 
     formatted_datestring = datetime.date.today().strftime("%Y%m%d")
-    return '%s_%s.csv' % (filename[:-3], formatted_datestring)
+    return '%s_%s.csv' % (filename[:-4], formatted_datestring)
