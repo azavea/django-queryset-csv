@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 
 from context import djqscsv
 
+from utils import Person, MockQuerySet
 
 class ValidateCleanFilenameTests(TestCase):
 
@@ -61,6 +62,20 @@ class AppendDatestampTests(TestCase):
         self.assertRaises(ValidationError,
                           djqscsv._append_datestamp,
                           filename)
+
+class GenerateFilenameTests(TestCase):
+    def test_generate_filename(self):
+        people = [Person('vetch', 'iffish', 'wizard'),
+                  Person('nemmerle', 'roke', 'arch mage')]
+
+        qs = MockQuerySet(people)
+
+        self.assertEqual(djqscsv.generate_filename(qs),
+                         'person_export.csv')
+
+        self.assertRegexpMatches(djqscsv.generate_filename(qs, True),
+                                 r'person_export_[0-9]{8}.csv')
+
 
 if __name__ == '__main__':
     main()

@@ -5,6 +5,6 @@ install:
   - pip install -r requirements.txt --use-mirrors
   - pip install -r dev_requirements.txt --use-mirrors
 script:
-  - coverage run --source=djqscsv tests/__init__.py
+  - coverage run --source=djqscsv setup.py test
 after_success:
   - coveralls

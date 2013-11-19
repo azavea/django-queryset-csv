@@ -19,4 +19,5 @@ setup(
         "License :: OSI Approved :: GNU General Public License (GPL)"
     ],
     install_requires=['django>=1.5'],
+    test_suite='tests.__init__',
 )
