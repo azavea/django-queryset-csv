@@ -55,8 +55,4 @@ def csv_view(request):
 
 ## todo
 
-django-queryset-csv will be ready for stable release when the following are complete:
-
-1. unit test coverage reaches 100%
-2. custom column headers are supported (currently column headers are always field names)
-3. The package can be easily deployed to PyPI.
+Planned development items are logged on the github issues page.
