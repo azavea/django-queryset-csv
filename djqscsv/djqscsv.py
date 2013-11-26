@@ -2,6 +2,7 @@ import csv
 import datetime
 
 from django.core.exceptions import ValidationError
+from django.templatetags.l10n import localize
 from django.utils.text import slugify
 from django.http import HttpResponse
 
@@ -124,7 +125,7 @@ def _sanitize_unicode_record(record):
         if isinstance(val, unicode):
             return value.encode("utf-8")
         else:
-            return str(value)
+            return localize(value)
 
     obj = {}
     for key, val in record.iteritems():
