@@ -79,7 +79,7 @@ class CSVException(Exception):
     pass
 
 
-def _write_csv_data(queryset, file_obj, verbose_field_names=None):
+def _write_csv_data(queryset, file_obj):
 
     # add BOM to suppor CSVs in MS Excel
     file_obj.write(u'\ufeff'.encode('utf8'))
