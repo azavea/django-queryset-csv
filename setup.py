@@ -8,7 +8,7 @@ setup(
     author='Steve Lamb',
     author_email='slamb@azavea.com',
     url='http://github.com/azavea/django-queryset-csv',
-    packages=find_packages(exclude=('tests',)),
+    packages=find_packages(exclude=('test_app',)),
     keywords="django queryset csv",
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -19,5 +19,4 @@ setup(
         "License :: OSI Approved :: GNU General Public License (GPL)"
     ],
     install_requires=['django>=1.5'],
-    test_suite='tests.__init__',
 )
