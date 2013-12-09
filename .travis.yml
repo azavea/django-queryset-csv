@@ -6,7 +6,8 @@ env:
   - DJANGO=1.6
 install:
   - pip install -r dev_requirements.txt --use-mirrors
+  - pip install -q Django==$DJANGO --use-mirrors
 script:
-  - coverage run --source=djqscsv setup.py test
+  - coverage run --source=djqscsv test_app/manage.py test djqscsv_tests
 after_success:
   - coveralls
