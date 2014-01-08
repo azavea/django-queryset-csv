@@ -91,9 +91,19 @@ class WriteCSVDataTests(TestCase):
                               info='arch mage')
         self.qs = Person.objects.all()
 
+        self.full_verbose_csv = [
+            ['\xef\xbb\xbfID', 'Person\'s name', 'address', 'Info on Person'],
+            ['1', 'vetch', 'iffish', 'wizard'],
+            ['2', 'nemmerle', 'roke', 'arch mage']]
+
         self.full_csv = [['\xef\xbb\xbfid', 'name', 'address', 'info'],
                          ['1', 'vetch', 'iffish', 'wizard'],
                          ['2', 'nemmerle', 'roke', 'arch mage']]
+
+        self.limited_verbose_csv = [
+            ['\xef\xbb\xbfPerson\'s name', 'address', 'Info on Person'],
+            ['vetch', 'iffish', 'wizard'],
+            ['nemmerle', 'roke', 'arch mage']]
 
         self.limited_csv = [['\xef\xbb\xbfname', 'address', 'info'],
                             ['vetch', 'iffish', 'wizard'],
@@ -107,24 +117,37 @@ class WriteCSVDataTests(TestCase):
             self.assertEqual(csv_row, expected_row)
 
         self.assertTrue(iteration_happened, "The CSV does not contain data.")
-    def test_write_csv_data_full(self):
 
+    def test_write_csv_full_terse(self):
         obj = StringIO()
-        djqscsv._write_csv_data(self.qs, obj)
+        djqscsv.write_csv(self.qs, obj, use_verbose_names=False)
         csv_file = filter(None, obj.getvalue().split('\n'))
         self.assertMatchesCsv(csv_file, self.full_csv)
 
-    def test_write_csv_data_limited(self):
+    def test_write_csv_full_verbose(self):
+        obj = StringIO()
+        djqscsv.write_csv(self.qs, obj)
+        csv_file = filter(None, obj.getvalue().split('\n'))
+        self.assertMatchesCsv(csv_file, self.full_verbose_csv)
+
+    def test_write_csv_limited_terse(self):
         qs = self.qs.values('name', 'address', 'info')
         obj = StringIO()
-        djqscsv._write_csv_data(qs, obj)
+        djqscsv.write_csv(qs, obj, use_verbose_names=False)
         csv_file = filter(None, obj.getvalue().split('\n'))
         self.assertMatchesCsv(csv_file, self.limited_csv)
 
+    def test_write_csv_limited_verbose(self):
+        qs = self.qs.values('name', 'address', 'info')
+        obj = StringIO()
+        djqscsv.write_csv(qs, obj)
+        csv_file = filter(None, obj.getvalue().split('\n'))
+        self.assertMatchesCsv(csv_file, self.limited_verbose_csv)
 
     def test_render_to_csv_response(self):
         response = djqscsv.render_to_csv_response(self.qs,
-                                                  filename="test_csv")
+                                                  filename="test_csv",
+                                                  use_verbose_names=False)
         self.assertEqual(response['Content-Type'], 'text/csv')
         self.assertMatchesCsv(response.content.split('\n'),
                               self.full_csv)

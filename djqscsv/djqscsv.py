@@ -20,7 +20,8 @@ class CSVException(Exception):
     pass
 
 
-def render_to_csv_response(queryset, filename=None, append_datestamp=False):
+def render_to_csv_response(queryset, filename=None, append_datestamp=False,
+                           field_header_map=None, use_verbose_names=True):
     """
     provides the boilerplate for making a CSV http response.
     takes a filename or generates one from the queryset's model.
@@ -37,15 +38,17 @@ def render_to_csv_response(queryset, filename=None, append_datestamp=False):
     response['Content-Disposition'] = 'attachment; filename=%s;' % filename
     response['Cache-Control'] = 'no-cache'
 
-    _write_csv_data(queryset, response)
+    write_csv(queryset, response, field_header_map, use_verbose_names)
 
     return response
 
 
+def write_csv(queryset, file_obj, field_header_map=None,
+              use_verbose_names=True):
     """
+    The main worker function. Writes CSV data to a file object based on the
+    contents of the queryset.
     """
-
-def _write_csv_data(queryset, file_obj):
 
     # add BOM to suppor CSVs in MS Excel
     file_obj.write(u'\ufeff'.encode('utf8'))
@@ -58,12 +61,25 @@ def _write_csv_data(queryset, file_obj):
         values_qs = queryset.values()
 
     try:
-        header_row = values_qs.field_names
+        field_names = values_qs.field_names
     except AttributeError:
         raise CSVException("Empty queryset provided to exporter.")
 
-    writer = csv.DictWriter(file_obj, header_row)
-    writer.writeheader()
+    # verbose_name defaults to the raw field name, so in either case
+    # this will produce a complete mapping of field names to column names
+    if use_verbose_names:
+        name_map = {field.name: field.verbose_name
+                    for field in queryset.model._meta.fields
+                    if field.name in field_names}
+    else:
+        name_map = {field: field for field in field_names}
+
+    # merge the custom field headers into the verbose/raw defaults, if provided
+    _field_header_map = field_header_map or {}
+    merged_header_map = dict(name_map.items() + _field_header_map.items())
+
+    writer = csv.DictWriter(file_obj, field_names)
+    writer.writerow(merged_header_map)
 
     for record in values_qs:
         record = _sanitize_unicode_record(record)
