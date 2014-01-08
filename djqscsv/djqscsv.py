@@ -13,17 +13,15 @@ if not settings.configured:
 
 from django.db.models.query import ValuesQuerySet
 
-from tempfile import TemporaryFile
-from cStringIO import StringIO
-
 """ A simple python package for turning django models into csvs """
 
-########################################
-# public functions
-########################################
+
+class CSVException(Exception):
+    pass
 
 
-def render_to_csv_response(queryset, filename=None, append_datestamp=False):
+def render_to_csv_response(queryset, filename=None, append_datestamp=False,
+                           field_header_map=None, use_verbose_names=True):
     """
     provides the boilerplate for making a CSV http response.
     takes a filename or generates one from the queryset's model.
@@ -40,23 +38,52 @@ def render_to_csv_response(queryset, filename=None, append_datestamp=False):
     response['Content-Disposition'] = 'attachment; filename=%s;' % filename
     response['Cache-Control'] = 'no-cache'
 
-    _write_csv_data(queryset, response)
+    write_csv(queryset, response, field_header_map, use_verbose_names)
 
     return response
 
 
-def create_csv(queryset, in_memory=False):
+def write_csv(queryset, file_obj, field_header_map=None,
+              use_verbose_names=True):
     """
-    Takes a queryset and returns a file-like object of CSV data.
+    The main worker function. Writes CSV data to a file object based on the
+    contents of the queryset.
     """
-    if in_memory:
-        csv_file = StringIO()
+
+    # add BOM to suppor CSVs in MS Excel
+    file_obj.write(u'\ufeff'.encode('utf8'))
+
+    # the CSV must always be built from a values queryset
+    # in order to introspect the necessary fields.
+    if isinstance(queryset, ValuesQuerySet):
+        values_qs = queryset
     else:
-        csv_file = TemporaryFile()
+        values_qs = queryset.values()
 
-    _write_csv_data(queryset, csv_file)
+    try:
+        field_names = values_qs.field_names
+    except AttributeError:
+        raise CSVException("Empty queryset provided to exporter.")
 
-    return csv_file
+    # verbose_name defaults to the raw field name, so in either case
+    # this will produce a complete mapping of field names to column names
+    if use_verbose_names:
+        name_map = {field.name: field.verbose_name
+                    for field in queryset.model._meta.fields
+                    if field.name in field_names}
+    else:
+        name_map = {field: field for field in field_names}
+
+    # merge the custom field headers into the verbose/raw defaults, if provided
+    _field_header_map = field_header_map or {}
+    merged_header_map = dict(name_map.items() + _field_header_map.items())
+
+    writer = csv.DictWriter(file_obj, field_names)
+    writer.writerow(merged_header_map)
+
+    for record in values_qs:
+        record = _sanitize_unicode_record(record)
+        writer.writerow(record)
 
 
 def generate_filename(queryset, append_datestamp=False):
@@ -70,37 +97,6 @@ def generate_filename(queryset, append_datestamp=False):
         base_filename = _append_datestamp(base_filename)
 
     return base_filename
-
-
-########################################
-# queryset reader/csv writer functions
-########################################
-
-class CSVException(Exception):
-    pass
-
-
-def _write_csv_data(queryset, file_obj):
-
-    # add BOM to suppor CSVs in MS Excel
-    file_obj.write(u'\ufeff'.encode('utf8'))
-
-    if isinstance(queryset, ValuesQuerySet):
-        values_qs = queryset
-    else:
-        values_qs = queryset.values()
-
-    try:
-        header_row = values_qs.field_names
-    except AttributeError:
-        raise CSVException("Empty queryset provided to exporter.")
-
-    writer = csv.DictWriter(file_obj, header_row)
-    writer.writeheader()
-
-    for record in values_qs:
-        record = _sanitize_unicode_record(record)
-        writer.writerow(record)
 
 ########################################
 # utility functions
