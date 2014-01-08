@@ -121,14 +121,6 @@ class WriteCSVDataTests(TestCase):
         csv_file = filter(None, obj.getvalue().split('\n'))
         self.assertMatchesCsv(csv_file, self.limited_csv)
 
-    def test_create_csv_full(self):
-        csv_file = djqscsv.create_csv(self.qs)
-        self.assertMatchesCsv(csv_file, self.full_csv)
-
-    def test_create_csv_limited(self):
-        qs = self.qs.values('name', 'address', 'info')
-        csv_file = djqscsv.create_csv(qs, in_memory=True)
-        self.assertMatchesCsv(csv_file, self.limited_csv)
 
     def test_render_to_csv_response(self):
         response = djqscsv.render_to_csv_response(self.qs,

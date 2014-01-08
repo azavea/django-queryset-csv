@@ -13,9 +13,6 @@ if not settings.configured:
 
 from django.db.models.query import ValuesQuerySet
 
-from tempfile import TemporaryFile
-from cStringIO import StringIO
-
 """ A simple python package for turning django models into csvs """
 
 
@@ -45,18 +42,8 @@ def render_to_csv_response(queryset, filename=None, append_datestamp=False):
     return response
 
 
-def create_csv(queryset, in_memory=False):
     """
-    Takes a queryset and returns a file-like object of CSV data.
     """
-    if in_memory:
-        csv_file = StringIO()
-    else:
-        csv_file = TemporaryFile()
-
-    _write_csv_data(queryset, csv_file)
-
-    return csv_file
 
 def _write_csv_data(queryset, file_obj):
 
