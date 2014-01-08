@@ -9,4 +9,3 @@ DATABASES = {
 SECRET_KEY = 'NO_SECRET_KEY'
 
 INSTALLED_APPS = ('djqscsv_tests',)
-

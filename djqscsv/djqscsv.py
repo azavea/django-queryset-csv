@@ -18,9 +18,9 @@ from cStringIO import StringIO
 
 """ A simple python package for turning django models into csvs """
 
-########################################
-# public functions
-########################################
+
+class CSVException(Exception):
+    pass
 
 
 def render_to_csv_response(queryset, filename=None, append_datestamp=False):
@@ -58,33 +58,13 @@ def create_csv(queryset, in_memory=False):
 
     return csv_file
 
-
-def generate_filename(queryset, append_datestamp=False):
-    """
-    Takes a queryset and returns a default
-    base filename based on the underlying model
-    """
-    base_filename = slugify(unicode(queryset.model.__name__)) + '_export.csv'
-
-    if append_datestamp:
-        base_filename = _append_datestamp(base_filename)
-
-    return base_filename
-
-
-########################################
-# queryset reader/csv writer functions
-########################################
-
-class CSVException(Exception):
-    pass
-
-
 def _write_csv_data(queryset, file_obj):
 
     # add BOM to suppor CSVs in MS Excel
     file_obj.write(u'\ufeff'.encode('utf8'))
 
+    # the CSV must always be built from a values queryset
+    # in order to introspect the necessary fields.
     if isinstance(queryset, ValuesQuerySet):
         values_qs = queryset
     else:
@@ -101,6 +81,19 @@ def _write_csv_data(queryset, file_obj):
     for record in values_qs:
         record = _sanitize_unicode_record(record)
         writer.writerow(record)
+
+
+def generate_filename(queryset, append_datestamp=False):
+    """
+    Takes a queryset and returns a default
+    base filename based on the underlying model
+    """
+    base_filename = slugify(unicode(queryset.model.__name__)) + '_export.csv'
+
+    if append_datestamp:
+        base_filename = _append_datestamp(base_filename)
+
+    return base_filename
 
 ########################################
 # utility functions

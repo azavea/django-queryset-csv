@@ -9,6 +9,7 @@ from context import djqscsv
 
 from models import Person
 
+
 class ValidateCleanFilenameTests(TestCase):
 
     def assertValidatedEquals(self, filename, expected_value):
@@ -17,7 +18,7 @@ class ValidateCleanFilenameTests(TestCase):
 
     def test_validate_no_dots(self):
         self.assertValidatedEquals('karg', 'karg.csv')
-    
+
     def test_validate_multiple_dots_csv(self):
         self.assertValidatedEquals('hort.town.csv',
                                    'horttown.csv')
@@ -36,6 +37,7 @@ class ValidateCleanFilenameTests(TestCase):
                           djqscsv._validate_and_clean_filename,
                           'gont.csv.island')
 
+
 class SanitizeUnicodeRecordTests(TestCase):
     def test_sanitize(self):
         record = {'name': 'Ged',
@@ -44,6 +46,7 @@ class SanitizeUnicodeRecordTests(TestCase):
         self.assertEqual(sanitized,
                          {'name': 'Ged',
                           'nickname': '\xef\xbb\xbfSparrowhawk'})
+
 
 class AppendDatestampTests(TestCase):
 
@@ -64,10 +67,12 @@ class AppendDatestampTests(TestCase):
                           djqscsv._append_datestamp,
                           filename)
 
+
 class GenerateFilenameTests(TestCase):
     def test_generate_filename(self):
         Person.objects.create(name='vetch', address='iffish', info='wizard')
-        Person.objects.create(name='nemmerle', address='roke', info='arch mage')
+        Person.objects.create(name='nemmerle', address='roke',
+                              info='arch mage')
 
         qs = Person.objects.all()
 
@@ -82,7 +87,8 @@ class WriteCSVDataTests(TestCase):
 
     def setUp(self):
         Person.objects.create(name='vetch', address='iffish', info='wizard')
-        Person.objects.create(name='nemmerle', address='roke', info='arch mage')
+        Person.objects.create(name='nemmerle', address='roke',
+                              info='arch mage')
         self.qs = Person.objects.all()
 
         self.full_csv = [['\xef\xbb\xbfid', 'name', 'address', 'info'],
@@ -101,8 +107,8 @@ class WriteCSVDataTests(TestCase):
             self.assertEqual(csv_row, expected_row)
 
         self.assertTrue(iteration_happened, "The CSV does not contain data.")
-        
     def test_write_csv_data_full(self):
+
         obj = StringIO()
         djqscsv._write_csv_data(self.qs, obj)
         csv_file = filter(None, obj.getvalue().split('\n'))
