@@ -95,8 +95,12 @@ class WriteCSVDataTests(TestCase):
 
     def assertMatchesCsv(self, csv_file, expected_data):
         csv_data = csv.reader(csv_file)
+        iteration_happened = False
         for csv_row, expected_row in zip(csv_data, expected_data):
+            iteration_happened = True
             self.assertEqual(csv_row, expected_row)
+
+        self.assertTrue(iteration_happened, "The CSV does not contain data.")
         
     def test_write_csv_data_full(self):
         obj = StringIO()
