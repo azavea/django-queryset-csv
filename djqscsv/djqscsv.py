@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.conf import settings
 if not settings.configured:
     # required to import ValuesQuerySet
-    settings.configure()
+    settings.configure() # pragma: no cover
 
 from django.db.models.query import ValuesQuerySet
 
@@ -63,6 +63,8 @@ def write_csv(queryset, file_obj, field_header_map=None,
     try:
         field_names = values_qs.field_names
     except AttributeError:
+        # in django1.5, empty querysets trigger
+        # this exception, but not django 1.6
         raise CSVException("Empty queryset provided to exporter.")
 
     # verbose_name defaults to the raw field name, so in either case
