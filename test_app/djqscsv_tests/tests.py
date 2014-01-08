@@ -1,6 +1,8 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
+from django import VERSION as DJANGO_VERSION
+
 import csv
 
 from StringIO import StringIO
@@ -151,3 +153,15 @@ class WriteCSVDataTests(TestCase):
         self.assertEqual(response['Content-Type'], 'text/csv')
         self.assertMatchesCsv(response.content.split('\n'),
                               self.full_csv)
+
+    def test_empty_queryset(self):
+        qs = self.qs.none()
+        obj = StringIO()
+        if DJANGO_VERSION[:2] == (1, 5):
+            with self.assertRaises(djqscsv.CSVException):
+                djqscsv.write_csv(qs, obj)
+        elif DJANGO_VERSION[:2] == (1, 6):
+            djqscsv.write_csv(qs, obj, use_verbose_names=False)
+            self.assertEqual(obj.getvalue(),
+                             '\xef\xbb\xbfid,name,address,info\r\n')
+
