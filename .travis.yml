@@ -1,11 +1,14 @@
 language: python
 python:
+  - "2.6"
   - "2.7"
+  - "3.3"
 env:
   - DJANGO=1.5
   - DJANGO=1.6
 install:
   - pip install -r dev_requirements.txt --use-mirrors
+  - python setup.py install
   - pip install -q Django==$DJANGO --use-mirrors
 script:
   - coverage run --source=djqscsv test_app/manage.py test djqscsv_tests
