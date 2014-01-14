@@ -2,6 +2,9 @@ django-queryset-csv
 ===================
 [![Build Status](https://travis-ci.org/azavea/django-queryset-csv.png)](https://travis-ci.org/azavea/django-queryset-csv)
 [![Coverage Status](https://coveralls.io/repos/azavea/django-queryset-csv/badge.png)](https://coveralls.io/r/azavea/django-queryset-csv)
+[![Version](https://pypip.in/v/django-queryset-csv/badge.png)](http://pypi.python.org/pypi/django-queryset-csv/)
+[![Downloads](https://pypip.in/d/django-queryset-csv/badge.png)](http://pypi.python.org/pypi/django-queryset-csv/)
+[![License](https://pypip.in/license/django-queryset-csv/badge.png)](http://www.gnu.org/licenses/gpl.html)
 
 
 a CSV exporter for django querysets.
