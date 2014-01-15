@@ -5,11 +5,17 @@ from django import VERSION as DJANGO_VERSION
 
 import csv
 
-from StringIO import StringIO
+from .context import djqscsv
 
-from context import djqscsv
+from .models import Person
 
-from models import Person
+import six
+
+if six.PY3:
+    from functools import filter
+    from io import StringIO
+else:
+    from StringIO import StringIO
 
 
 class ValidateCleanFilenameTests(TestCase):

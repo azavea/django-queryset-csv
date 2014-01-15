@@ -13,6 +13,8 @@ if not settings.configured:
 
 from django.db.models.query import ValuesQuerySet
 
+import six
+
 """ A simple python package for turning django models into csvs """
 
 
@@ -78,7 +80,8 @@ def write_csv(queryset, file_obj, field_header_map=None,
 
     # merge the custom field headers into the verbose/raw defaults, if provided
     _field_header_map = field_header_map or {}
-    merged_header_map = dict(name_map.items() + _field_header_map.items())
+    merged_header_map = name_map.copy()
+    merged_header_map.update(_field_header_map)
 
     writer = csv.DictWriter(file_obj, field_names)
     writer.writerow(merged_header_map)
@@ -126,7 +129,7 @@ def _sanitize_unicode_record(record):
             return localize(value)
 
     obj = {}
-    for key, val in record.iteritems():
+    for key, val in six.iteritems(record):
         if val:
             obj[_sanitize_value(key)] = _sanitize_value(val)
 
