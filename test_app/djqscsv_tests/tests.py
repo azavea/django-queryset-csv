@@ -18,6 +18,14 @@ else:
     from StringIO import StringIO
 
 
+def create_people_and_get_queryset():
+    Person.objects.create(name='vetch', address='iffish', info='wizard')
+    Person.objects.create(name='nemmerle', address='roke',
+                              info='arch mage')
+
+    return Person.objects.all()
+
+
 class ValidateCleanFilenameTests(TestCase):
 
     def assertValidatedEquals(self, filename, expected_value):
@@ -78,11 +86,7 @@ class AppendDatestampTests(TestCase):
 
 class GenerateFilenameTests(TestCase):
     def test_generate_filename(self):
-        Person.objects.create(name='vetch', address='iffish', info='wizard')
-        Person.objects.create(name='nemmerle', address='roke',
-                              info='arch mage')
-
-        qs = Person.objects.all()
+        qs = create_people_and_get_queryset()
 
         self.assertEqual(djqscsv.generate_filename(qs),
                          'person_export.csv')
@@ -94,10 +98,7 @@ class GenerateFilenameTests(TestCase):
 class WriteCSVDataTests(TestCase):
 
     def setUp(self):
-        Person.objects.create(name='vetch', address='iffish', info='wizard')
-        Person.objects.create(name='nemmerle', address='roke',
-                              info='arch mage')
-        self.qs = Person.objects.all()
+        self.qs = create_people_and_get_queryset()
 
         self.full_verbose_csv = [
             ['\xef\xbb\xbfID', 'Person\'s name', 'address', 'Info on Person'],
@@ -151,6 +152,27 @@ class WriteCSVDataTests(TestCase):
         djqscsv.write_csv(qs, obj)
         csv_file = filter(None, obj.getvalue().split('\n'))
         self.assertMatchesCsv(csv_file, self.limited_verbose_csv)
+
+    def test_render_to_csv_response_with_filename_and_datestamp(self):
+        filename = "the_reach.csv"
+
+        response = djqscsv.render_to_csv_response(self.qs,
+                                                  filename=filename,
+                                                  append_datestamp=True)
+
+        self.assertRegexpMatches(response['Content-Disposition'],
+                                 r'attachment; filename=the_reach_[0-9]{8}.csv;')
+
+    def test_render_to_csv_response_no_filename(self):
+        response = djqscsv.render_to_csv_response(self.qs,
+                                                  use_verbose_names=False)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertMatchesCsv(response.content.split('\n'),
+                              self.full_csv)
+
+        self.assertRegexpMatches(response['Content-Disposition'],
+                                 r'attachment; filename=person_export.csv;')
+
 
     def test_render_to_csv_response(self):
         response = djqscsv.render_to_csv_response(self.qs,
