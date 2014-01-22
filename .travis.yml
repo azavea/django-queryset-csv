@@ -2,13 +2,13 @@ language: python
 python:
   - "2.7"
 env:
-  - DJANGO=1.5
-  - DJANGO=1.6
+  - DJANGO=1.5 RUNNER="coverage run --source=djqscsv" SUCCESS="coveralls"
+  - DJANGO=1.6 RUNNER="python" SUCCESS="echo DONE"
 install:
   - pip install -r dev_requirements.txt --use-mirrors
   - python setup.py install
   - pip install -q Django==$DJANGO --use-mirrors
 script:
-  - coverage run --source=djqscsv test_app/manage.py test djqscsv_tests
+  - $RUNNER test_app/manage.py test djqscsv_tests
 after_success:
-  - coveralls
+  - $SUCCESS
