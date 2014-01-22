@@ -18,6 +18,14 @@ else:
     from StringIO import StringIO
 
 
+def create_people_and_get_queryset():
+    Person.objects.create(name='vetch', address='iffish', info='wizard')
+    Person.objects.create(name='nemmerle', address='roke',
+                              info='arch mage')
+
+    return Person.objects.all()
+
+
 class ValidateCleanFilenameTests(TestCase):
 
     def assertValidatedEquals(self, filename, expected_value):
@@ -78,11 +86,7 @@ class AppendDatestampTests(TestCase):
 
 class GenerateFilenameTests(TestCase):
     def test_generate_filename(self):
-        Person.objects.create(name='vetch', address='iffish', info='wizard')
-        Person.objects.create(name='nemmerle', address='roke',
-                              info='arch mage')
-
-        qs = Person.objects.all()
+        qs = create_people_and_get_queryset()
 
         self.assertEqual(djqscsv.generate_filename(qs),
                          'person_export.csv')
@@ -94,10 +98,7 @@ class GenerateFilenameTests(TestCase):
 class WriteCSVDataTests(TestCase):
 
     def setUp(self):
-        Person.objects.create(name='vetch', address='iffish', info='wizard')
-        Person.objects.create(name='nemmerle', address='roke',
-                              info='arch mage')
-        self.qs = Person.objects.all()
+        self.qs = create_people_and_get_queryset()
 
         self.full_verbose_csv = [
             ['\xef\xbb\xbfID', 'Person\'s name', 'address', 'Info on Person'],
