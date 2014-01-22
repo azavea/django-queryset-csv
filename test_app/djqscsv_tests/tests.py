@@ -153,6 +153,27 @@ class WriteCSVDataTests(TestCase):
         csv_file = filter(None, obj.getvalue().split('\n'))
         self.assertMatchesCsv(csv_file, self.limited_verbose_csv)
 
+    def test_render_to_csv_response_with_filename_and_datestamp(self):
+        filename = "the_reach.csv"
+
+        response = djqscsv.render_to_csv_response(self.qs,
+                                                  filename=filename,
+                                                  append_datestamp=True)
+
+        self.assertRegexpMatches(response['Content-Disposition'],
+                                 r'attachment; filename=the_reach_[0-9]{8}.csv;')
+
+    def test_render_to_csv_response_no_filename(self):
+        response = djqscsv.render_to_csv_response(self.qs,
+                                                  use_verbose_names=False)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertMatchesCsv(response.content.split('\n'),
+                              self.full_csv)
+
+        self.assertRegexpMatches(response['Content-Disposition'],
+                                 r'attachment; filename=person_export.csv;')
+
+
     def test_render_to_csv_response(self):
         response = djqscsv.render_to_csv_response(self.qs,
                                                   filename="test_csv",
