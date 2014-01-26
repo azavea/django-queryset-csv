@@ -13,8 +13,6 @@ if not settings.configured:
 
 from django.db.models.query import ValuesQuerySet
 
-import six
-
 """ A simple python package for turning django models into csvs """
 
 
@@ -129,7 +127,7 @@ def _sanitize_unicode_record(record):
             return localize(value)
 
     obj = {}
-    for key, val in six.iteritems(record):
+    for key, val in record.items():
         if val:
             obj[_sanitize_value(key)] = _sanitize_value(val)
 
