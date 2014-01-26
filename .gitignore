@@ -1,5 +1,14 @@
+# basic python ignores
 *.pyc
+
+# build/dist ignores
 dist/*
 *.egg-info/*
 *.egg*
+build/*
+
+# ignore virtualenv directory
 env/*
+
+# ignore db created in test app
+db
