@@ -9,6 +9,8 @@ from .context import djqscsv
 
 from .models import Person
 
+from .util import create_people_and_get_queryset
+
 import six
 
 if six.PY3:
@@ -16,14 +18,6 @@ if six.PY3:
     from io import StringIO
 else:
     from StringIO import StringIO
-
-
-def create_people_and_get_queryset():
-    Person.objects.create(name='vetch', address='iffish', info='wizard')
-    Person.objects.create(name='nemmerle', address='roke',
-                              info='arch mage')
-
-    return Person.objects.all()
 
 
 class ValidateCleanFilenameTests(TestCase):
