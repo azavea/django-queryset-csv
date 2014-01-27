@@ -11,7 +11,7 @@ from .models import Person
 
 from .util import create_people_and_get_queryset
 
-import six
+from django.utils import six
 
 if six.PY3:
     from functools import filter

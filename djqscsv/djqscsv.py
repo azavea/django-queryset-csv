@@ -13,7 +13,7 @@ if not settings.configured:
 
 from django.db.models.query import ValuesQuerySet
 
-import six
+from django.utils import six
 
 """ A simple python package for turning django models into csvs """
 
