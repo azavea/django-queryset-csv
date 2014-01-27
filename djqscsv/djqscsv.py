@@ -72,7 +72,7 @@ def write_csv(queryset, file_obj, field_header_map=None,
     # verbose_name defaults to the raw field name, so in either case
     # this will produce a complete mapping of field names to column names
     if use_verbose_names:
-        name_map = {field.name: field.verbose_name
+        name_map = {field.name: unicode(field.verbose_name)
                     for field in queryset.model._meta.fields
                     if field.name in field_names}
     else:
