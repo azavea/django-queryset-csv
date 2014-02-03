@@ -64,10 +64,17 @@ def write_csv(queryset, file_obj, field_header_map=None,
 
     try:
         field_names = values_qs.field_names
+        extra_columns = list(values_qs.query.extra_select)
+        if extra_columns:
+            # TODO: provide actual ordering
+            field_names += extra_columns
+
     except AttributeError:
         # in django1.5, empty querysets trigger
         # this exception, but not django 1.6
         raise CSVException("Empty queryset provided to exporter.")
+
+    writer = csv.DictWriter(file_obj, field_names)
 
     # verbose_name defaults to the raw field name, so in either case
     # this will produce a complete mapping of field names to column names
@@ -82,8 +89,6 @@ def write_csv(queryset, file_obj, field_header_map=None,
     _field_header_map = field_header_map or {}
     merged_header_map = name_map.copy()
     merged_header_map.update(_field_header_map)
-
-    writer = csv.DictWriter(file_obj, field_names)
     writer.writerow(merged_header_map)
 
     for record in values_qs:
