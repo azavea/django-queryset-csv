@@ -137,7 +137,7 @@ def _sanitize_unicode_record(record):
 
     obj = {}
     for key, val in six.iteritems(record):
-        if val:
+        if val is not None:
             obj[_sanitize_value(key)] = _sanitize_value(val)
 
     return obj
