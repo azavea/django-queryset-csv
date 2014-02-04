@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django import VERSION as DJANGO_VERSION
 
 import csv
+import itertools
 
 from .context import djqscsv
 
@@ -89,7 +90,21 @@ class GenerateFilenameTests(TestCase):
                                  r'person_export_[0-9]{8}.csv')
 
 
-class WriteCSVDataTests(TestCase):
+class CSVTestCase(TestCase):
+
+    def assertMatchesCsv(self, csv_file, expected_data):
+        csv_data = csv.reader(csv_file)
+        iteration_happened = False
+        test_pairs = itertools.izip_longest(csv_data, expected_data,
+                                            fillvalue=[])
+        for csv_row, expected_row in test_pairs:
+            iteration_happened = True
+            self.assertEqual(csv_row, expected_row)
+
+        self.assertTrue(iteration_happened, "The CSV does not contain data.")
+
+
+class WriteCSVDataTests(CSVTestCase):
 
     def setUp(self):
         self.qs = create_people_and_get_queryset()
@@ -111,15 +126,6 @@ class WriteCSVDataTests(TestCase):
         self.limited_csv = [['\xef\xbb\xbfname', 'address', 'info'],
                             ['vetch', 'iffish', 'wizard'],
                             ['nemmerle', 'roke', 'arch mage']]
-
-    def assertMatchesCsv(self, csv_file, expected_data):
-        csv_data = csv.reader(csv_file)
-        iteration_happened = False
-        for csv_row, expected_row in zip(csv_data, expected_data):
-            iteration_happened = True
-            self.assertEqual(csv_row, expected_row)
-
-        self.assertTrue(iteration_happened, "The CSV does not contain data.")
 
     def test_write_csv_full_terse(self):
         obj = StringIO()
