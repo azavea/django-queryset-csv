@@ -89,6 +89,8 @@ def write_csv(queryset, file_obj, field_header_map=None,
     _field_header_map = field_header_map or {}
     merged_header_map = name_map.copy()
     merged_header_map.update(_field_header_map)
+    if extra_columns:
+        merged_header_map.update({k: k for k in extra_columns})
     writer.writerow(merged_header_map)
 
     for record in values_qs:
