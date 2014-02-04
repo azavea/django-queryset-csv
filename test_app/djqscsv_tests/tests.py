@@ -103,33 +103,31 @@ class CSVTestCase(TestCase):
 
         self.assertTrue(iteration_happened, "The CSV does not contain data.")
 
+    BIGGEST_POSSIBLE_CSV = [
+            ['\xef\xbb\xbfID', 'Person\'s name', 'address',
+             'Info on Person', 'Most Powerful'],
+            ['1', 'vetch', 'iffish', 'wizard', '0'],
+            ['2', 'nemmerle', 'roke', 'deceased arch mage', '1'],
+            ['3', 'ged', 'gont', 'former arch mage', '1']]
+
 
 class WriteCSVDataTests(CSVTestCase):
 
     def setUp(self):
         self.qs = create_people_and_get_queryset()
 
-        self.full_verbose_csv = [
-            ['\xef\xbb\xbfID', 'Person\'s name', 'address', 'Info on Person'],
-            ['1', 'vetch', 'iffish', 'wizard'],
-            ['2', 'nemmerle', 'roke', 'deceased arch mage'],
-            ['3', 'ged', 'gont', 'former arch mage']]
+        self.full_verbose_csv = [row[:-1] for row in CSVTestCase.BIGGEST_POSSIBLE_CSV]
 
-        self.full_csv = [['\xef\xbb\xbfid', 'name', 'address', 'info'],
-                         ['1', 'vetch', 'iffish', 'wizard'],
-                         ['2', 'nemmerle', 'roke', 'deceased arch mage'],
-                         ['3', 'ged', 'gont', 'former arch mage']]
+        self.full_csv = ([['\xef\xbb\xbfid', 'name', 'address', 'info']] +
+                         self.full_verbose_csv[1:])
 
-        self.limited_verbose_csv = [
-            ['\xef\xbb\xbfPerson\'s name', 'address', 'Info on Person'],
-            ['vetch', 'iffish', 'wizard'],
-            ['nemmerle', 'roke', 'deceased arch mage'],
-            ['ged', 'gont', 'former arch mage']]
+        self.limited_verbose_csv = (
+            [['\xef\xbb\xbfPerson\'s name', 'address', 'Info on Person']] +
+            [row[1:] for row in self.full_verbose_csv[1:]])
 
-        self.limited_csv = [['\xef\xbb\xbfname', 'address', 'info'],
-                            ['vetch', 'iffish', 'wizard'],
-                            ['nemmerle', 'roke', 'deceased arch mage'],
-                            ['ged', 'gont', 'former arch mage']]
+        self.limited_csv = (
+            [['\xef\xbb\xbfname', 'address', 'info']] +
+            self.limited_verbose_csv[1:])
 
     def test_write_csv_full_terse(self):
         obj = StringIO()
@@ -203,12 +201,7 @@ class OrderingTests(CSVTestCase):
         self.qs = create_people_and_get_queryset().extra(
             select={'Most Powerful':"info LIKE '%arch mage%'"})
 
-        self.csv_with_extra = [
-            ['\xef\xbb\xbfID', 'Person\'s name', 'address',
-             'Info on Person', 'Most Powerful'],
-            ['1', 'vetch', 'iffish', 'wizard', '0'],
-            ['2', 'nemmerle', 'roke', 'deceased arch mage', '1'],
-            ['3', 'ged', 'gont', 'former arch mage', '1']]
+        self.csv_with_extra = CSVTestCase.BIGGEST_POSSIBLE_CSV
 
         self.custom_order_csv = [[row[0], row[4]] + row[1:4]
                                  for row in self.csv_with_extra]
