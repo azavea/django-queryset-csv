@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django import VERSION as DJANGO_VERSION
 
 import csv
+import itertools
 
 from .context import djqscsv
 
@@ -50,12 +51,12 @@ class ValidateCleanFilenameTests(TestCase):
 
 class SanitizeUnicodeRecordTests(TestCase):
     def test_sanitize(self):
-        record = {'name': 'Ged',
-                  'nickname': u'\ufeffSparrowhawk'}
+        record = {'name': 'Tenar',
+                  'nickname': u'\ufeffThe White Lady of Gont'}
         sanitized = djqscsv._sanitize_unicode_record(record)
         self.assertEqual(sanitized,
-                         {'name': 'Ged',
-                          'nickname': '\xef\xbb\xbfSparrowhawk'})
+                         {'name': 'Tenar',
+                          'nickname': '\xef\xbb\xbfThe White Lady of Gont'})
 
 
 class AppendDatestampTests(TestCase):
@@ -89,7 +90,21 @@ class GenerateFilenameTests(TestCase):
                                  r'person_export_[0-9]{8}.csv')
 
 
-class WriteCSVDataTests(TestCase):
+class CSVTestCase(TestCase):
+
+    def assertMatchesCsv(self, csv_file, expected_data):
+        csv_data = csv.reader(csv_file)
+        iteration_happened = False
+        test_pairs = itertools.izip_longest(csv_data, expected_data,
+                                            fillvalue=[])
+        for csv_row, expected_row in test_pairs:
+            iteration_happened = True
+            self.assertEqual(csv_row, expected_row)
+
+        self.assertTrue(iteration_happened, "The CSV does not contain data.")
+
+
+class WriteCSVDataTests(CSVTestCase):
 
     def setUp(self):
         self.qs = create_people_and_get_queryset()
@@ -97,29 +112,24 @@ class WriteCSVDataTests(TestCase):
         self.full_verbose_csv = [
             ['\xef\xbb\xbfID', 'Person\'s name', 'address', 'Info on Person'],
             ['1', 'vetch', 'iffish', 'wizard'],
-            ['2', 'nemmerle', 'roke', 'arch mage']]
+            ['2', 'nemmerle', 'roke', 'deceased arch mage'],
+            ['3', 'ged', 'gont', 'former arch mage']]
 
         self.full_csv = [['\xef\xbb\xbfid', 'name', 'address', 'info'],
                          ['1', 'vetch', 'iffish', 'wizard'],
-                         ['2', 'nemmerle', 'roke', 'arch mage']]
+                         ['2', 'nemmerle', 'roke', 'deceased arch mage'],
+                         ['3', 'ged', 'gont', 'former arch mage']]
 
         self.limited_verbose_csv = [
             ['\xef\xbb\xbfPerson\'s name', 'address', 'Info on Person'],
             ['vetch', 'iffish', 'wizard'],
-            ['nemmerle', 'roke', 'arch mage']]
+            ['nemmerle', 'roke', 'deceased arch mage'],
+            ['ged', 'gont', 'former arch mage']]
 
         self.limited_csv = [['\xef\xbb\xbfname', 'address', 'info'],
                             ['vetch', 'iffish', 'wizard'],
-                            ['nemmerle', 'roke', 'arch mage']]
-
-    def assertMatchesCsv(self, csv_file, expected_data):
-        csv_data = csv.reader(csv_file)
-        iteration_happened = False
-        for csv_row, expected_row in zip(csv_data, expected_data):
-            iteration_happened = True
-            self.assertEqual(csv_row, expected_row)
-
-        self.assertTrue(iteration_happened, "The CSV does not contain data.")
+                            ['nemmerle', 'roke', 'deceased arch mage'],
+                            ['ged', 'gont', 'former arch mage']]
 
     def test_write_csv_full_terse(self):
         obj = StringIO()
@@ -186,4 +196,32 @@ class WriteCSVDataTests(TestCase):
             djqscsv.write_csv(qs, obj, use_verbose_names=False)
             self.assertEqual(obj.getvalue(),
                              '\xef\xbb\xbfid,name,address,info\r\n')
+
+
+class OrderingTests(CSVTestCase):
+    def setUp(self):
+        self.qs = create_people_and_get_queryset().extra(
+            select={'Most Powerful':"info LIKE '%arch mage%'"})
+
+        self.csv_with_extra = [
+            ['\xef\xbb\xbfID', 'Person\'s name', 'address',
+             'Info on Person', 'Most Powerful'],
+            ['1', 'vetch', 'iffish', 'wizard', '0'],
+            ['2', 'nemmerle', 'roke', 'deceased arch mage', '1'],
+            ['3', 'ged', 'gont', 'former arch mage', '1']]
+
+        self.custom_order_csv = [[row[0], row[4]] + row[1:4]
+                                 for row in self.csv_with_extra]
+
+    def test_extra_select(self):
+        obj = StringIO()
+        djqscsv.write_csv(self.qs, obj)
+        csv_file = filter(None, obj.getvalue().split('\n'))
+        self.assertMatchesCsv(csv_file, self.csv_with_extra)
+
+    def test_extra_select_ordering(self):
+        obj = StringIO()
+        djqscsv.write_csv(self.qs, obj, field_order=['id', 'Most Powerful'])
+        csv_file = filter(None, obj.getvalue().split('\n'))
+        self.assertMatchesCsv(csv_file, self.custom_order_csv)
 
