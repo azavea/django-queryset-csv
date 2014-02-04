@@ -196,6 +196,19 @@ class WriteCSVDataTests(CSVTestCase):
             self.assertEqual(obj.getvalue(),
                              '\xef\xbb\xbfid,name,address,info,hobby_id\r\n')
 
+class WalkRelationshipTests(CSVTestCase):
+    def setUp(self):
+        self.qs = create_people_and_get_queryset()\
+            .values('id', 'name', 'address', 'info', 'hobby_id', 'hobby__name')
+        self.csv_with_related_data = [row[:6] for row in
+                                      CSVTestCase.BIGGEST_POSSIBLE_CSV]
+
+    def test_with_related(self):
+        obj = StringIO()
+        djqscsv.write_csv(self.qs, obj)
+        csv_file = filter(None, obj.getvalue().split('\n'))
+        self.assertMatchesCsv(csv_file, self.csv_with_related_data)
+
 
 class OrderingTests(CSVTestCase):
     def setUp(self):
