@@ -105,10 +105,10 @@ class CSVTestCase(TestCase):
 
     BIGGEST_POSSIBLE_CSV = [
             ['\xef\xbb\xbfID', 'Person\'s name', 'address',
-             'Info on Person', 'Most Powerful'],
-            ['1', 'vetch', 'iffish', 'wizard', '0'],
-            ['2', 'nemmerle', 'roke', 'deceased arch mage', '1'],
-            ['3', 'ged', 'gont', 'former arch mage', '1']]
+             'Info on Person', 'hobby_id', 'hobby__name', 'Most Powerful'],
+            ['1', 'vetch', 'iffish', 'wizard', '1', 'Doing Magic', '0'],
+            ['2', 'nemmerle', 'roke', 'deceased arch mage', '2', 'Resting', '1'],
+            ['3', 'ged', 'gont', 'former arch mage', '2', 'Resting', '1']]
 
 
 class WriteCSVDataTests(CSVTestCase):
@@ -116,14 +116,15 @@ class WriteCSVDataTests(CSVTestCase):
     def setUp(self):
         self.qs = create_people_and_get_queryset()
 
-        self.full_verbose_csv = [row[:-1] for row in CSVTestCase.BIGGEST_POSSIBLE_CSV]
+        self.full_verbose_csv = [row[:5] for row in
+                                 CSVTestCase.BIGGEST_POSSIBLE_CSV]
 
-        self.full_csv = ([['\xef\xbb\xbfid', 'name', 'address', 'info']] +
+        self.full_csv = ([['\xef\xbb\xbfid', 'name', 'address', 'info', 'hobby_id']] +
                          self.full_verbose_csv[1:])
 
         self.limited_verbose_csv = (
             [['\xef\xbb\xbfPerson\'s name', 'address', 'Info on Person']] +
-            [row[1:] for row in self.full_verbose_csv[1:]])
+            [row[1:-1] for row in self.full_verbose_csv[1:]])
 
         self.limited_csv = (
             [['\xef\xbb\xbfname', 'address', 'info']] +
@@ -193,7 +194,7 @@ class WriteCSVDataTests(CSVTestCase):
         elif DJANGO_VERSION[:2] == (1, 6):
             djqscsv.write_csv(qs, obj, use_verbose_names=False)
             self.assertEqual(obj.getvalue(),
-                             '\xef\xbb\xbfid,name,address,info\r\n')
+                             '\xef\xbb\xbfid,name,address,info,hobby_id\r\n')
 
 
 class OrderingTests(CSVTestCase):
@@ -201,9 +202,10 @@ class OrderingTests(CSVTestCase):
         self.qs = create_people_and_get_queryset().extra(
             select={'Most Powerful':"info LIKE '%arch mage%'"})
 
-        self.csv_with_extra = CSVTestCase.BIGGEST_POSSIBLE_CSV
+        self.csv_with_extra = [row[:5] + row[6:] for row in
+                               CSVTestCase.BIGGEST_POSSIBLE_CSV]
 
-        self.custom_order_csv = [[row[0], row[4]] + row[1:4]
+        self.custom_order_csv = [row[0:1] + row[5:6] + row[1:5]
                                  for row in self.csv_with_extra]
 
     def test_extra_select(self):
