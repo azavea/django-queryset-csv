@@ -103,33 +103,32 @@ class CSVTestCase(TestCase):
 
         self.assertTrue(iteration_happened, "The CSV does not contain data.")
 
+    BIGGEST_POSSIBLE_CSV = [
+            ['\xef\xbb\xbfID', 'Person\'s name', 'address',
+             'Info on Person', 'hobby_id', 'hobby__name', 'Most Powerful'],
+            ['1', 'vetch', 'iffish', 'wizard', '1', 'Doing Magic', '0'],
+            ['2', 'nemmerle', 'roke', 'deceased arch mage', '2', 'Resting', '1'],
+            ['3', 'ged', 'gont', 'former arch mage', '2', 'Resting', '1']]
+
 
 class WriteCSVDataTests(CSVTestCase):
 
     def setUp(self):
         self.qs = create_people_and_get_queryset()
 
-        self.full_verbose_csv = [
-            ['\xef\xbb\xbfID', 'Person\'s name', 'address', 'Info on Person'],
-            ['1', 'vetch', 'iffish', 'wizard'],
-            ['2', 'nemmerle', 'roke', 'deceased arch mage'],
-            ['3', 'ged', 'gont', 'former arch mage']]
+        self.full_verbose_csv = [row[:5] for row in
+                                 CSVTestCase.BIGGEST_POSSIBLE_CSV]
 
-        self.full_csv = [['\xef\xbb\xbfid', 'name', 'address', 'info'],
-                         ['1', 'vetch', 'iffish', 'wizard'],
-                         ['2', 'nemmerle', 'roke', 'deceased arch mage'],
-                         ['3', 'ged', 'gont', 'former arch mage']]
+        self.full_csv = ([['\xef\xbb\xbfid', 'name', 'address', 'info', 'hobby_id']] +
+                         self.full_verbose_csv[1:])
 
-        self.limited_verbose_csv = [
-            ['\xef\xbb\xbfPerson\'s name', 'address', 'Info on Person'],
-            ['vetch', 'iffish', 'wizard'],
-            ['nemmerle', 'roke', 'deceased arch mage'],
-            ['ged', 'gont', 'former arch mage']]
+        self.limited_verbose_csv = (
+            [['\xef\xbb\xbfPerson\'s name', 'address', 'Info on Person']] +
+            [row[1:-1] for row in self.full_verbose_csv[1:]])
 
-        self.limited_csv = [['\xef\xbb\xbfname', 'address', 'info'],
-                            ['vetch', 'iffish', 'wizard'],
-                            ['nemmerle', 'roke', 'deceased arch mage'],
-                            ['ged', 'gont', 'former arch mage']]
+        self.limited_csv = (
+            [['\xef\xbb\xbfname', 'address', 'info']] +
+            self.limited_verbose_csv[1:])
 
     def test_write_csv_full_terse(self):
         obj = StringIO()
@@ -195,7 +194,20 @@ class WriteCSVDataTests(CSVTestCase):
         elif DJANGO_VERSION[:2] == (1, 6):
             djqscsv.write_csv(qs, obj, use_verbose_names=False)
             self.assertEqual(obj.getvalue(),
-                             '\xef\xbb\xbfid,name,address,info\r\n')
+                             '\xef\xbb\xbfid,name,address,info,hobby_id\r\n')
+
+class WalkRelationshipTests(CSVTestCase):
+    def setUp(self):
+        self.qs = create_people_and_get_queryset()\
+            .values('id', 'name', 'address', 'info', 'hobby_id', 'hobby__name')
+        self.csv_with_related_data = [row[:6] for row in
+                                      CSVTestCase.BIGGEST_POSSIBLE_CSV]
+
+    def test_with_related(self):
+        obj = StringIO()
+        djqscsv.write_csv(self.qs, obj)
+        csv_file = filter(None, obj.getvalue().split('\n'))
+        self.assertMatchesCsv(csv_file, self.csv_with_related_data)
 
 
 class OrderingTests(CSVTestCase):
@@ -203,14 +215,10 @@ class OrderingTests(CSVTestCase):
         self.qs = create_people_and_get_queryset().extra(
             select={'Most Powerful':"info LIKE '%arch mage%'"})
 
-        self.csv_with_extra = [
-            ['\xef\xbb\xbfID', 'Person\'s name', 'address',
-             'Info on Person', 'Most Powerful'],
-            ['1', 'vetch', 'iffish', 'wizard', '0'],
-            ['2', 'nemmerle', 'roke', 'deceased arch mage', '1'],
-            ['3', 'ged', 'gont', 'former arch mage', '1']]
+        self.csv_with_extra = [row[:5] + row[6:] for row in
+                               CSVTestCase.BIGGEST_POSSIBLE_CSV]
 
-        self.custom_order_csv = [[row[0], row[4]] + row[1:4]
+        self.custom_order_csv = [row[0:1] + row[5:6] + row[1:5]
                                  for row in self.csv_with_extra]
 
     def test_extra_select(self):
