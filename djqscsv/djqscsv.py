@@ -23,7 +23,8 @@ class CSVException(Exception):
 
 
 def render_to_csv_response(queryset, filename=None, append_datestamp=False,
-                           field_header_map=None, use_verbose_names=True):
+                           field_header_map=None, use_verbose_names=True,
+                           field_order=None):
     """
     provides the boilerplate for making a CSV http response.
     takes a filename or generates one from the queryset's model.
@@ -40,13 +41,13 @@ def render_to_csv_response(queryset, filename=None, append_datestamp=False,
     response['Content-Disposition'] = 'attachment; filename=%s;' % filename
     response['Cache-Control'] = 'no-cache'
 
-    write_csv(queryset, response, field_header_map, use_verbose_names)
+    write_csv(queryset, response, field_header_map, use_verbose_names, field_order)
 
     return response
 
 
 def write_csv(queryset, file_obj, field_header_map=None,
-              use_verbose_names=True):
+              use_verbose_names=True, field_order=None):
     """
     The main worker function. Writes CSV data to a file object based on the
     contents of the queryset.
@@ -64,15 +65,24 @@ def write_csv(queryset, file_obj, field_header_map=None,
 
     try:
         field_names = values_qs.field_names
-        extra_columns = list(values_qs.query.extra_select)
-        if extra_columns:
-            # TODO: provide actual ordering
-            field_names += extra_columns
 
     except AttributeError:
         # in django1.5, empty querysets trigger
         # this exception, but not django 1.6
         raise CSVException("Empty queryset provided to exporter.")
+
+    extra_columns = list(values_qs.query.extra_select)
+    if extra_columns:
+        field_names += extra_columns
+
+    if field_order:
+        # go through the field_names and put the ones
+        # that appear in the ordering list first
+        field_names = ([field for field in field_order
+                       if field in field_names] +
+                       [field for field in field_names
+                        if field not in field_order])
+
 
     writer = csv.DictWriter(file_obj, field_names)
 

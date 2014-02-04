@@ -197,3 +197,31 @@ class WriteCSVDataTests(CSVTestCase):
             self.assertEqual(obj.getvalue(),
                              '\xef\xbb\xbfid,name,address,info\r\n')
 
+
+class OrderingTests(CSVTestCase):
+    def setUp(self):
+        self.qs = create_people_and_get_queryset().extra(
+            select={'Most Powerful':"info LIKE '%arch mage%'"})
+
+        self.csv_with_extra = [
+            ['\xef\xbb\xbfID', 'Person\'s name', 'address',
+             'Info on Person', 'Most Powerful'],
+            ['1', 'vetch', 'iffish', 'wizard', '0'],
+            ['2', 'nemmerle', 'roke', 'deceased arch mage', '1'],
+            ['3', 'ged', 'gont', 'former arch mage', '1']]
+
+        self.custom_order_csv = [[row[0], row[4]] + row[1:4]
+                                 for row in self.csv_with_extra]
+
+    def test_extra_select(self):
+        obj = StringIO()
+        djqscsv.write_csv(self.qs, obj)
+        csv_file = filter(None, obj.getvalue().split('\n'))
+        self.assertMatchesCsv(csv_file, self.csv_with_extra)
+
+    def test_extra_select_ordering(self):
+        obj = StringIO()
+        djqscsv.write_csv(self.qs, obj, field_order=['id', 'Most Powerful'])
+        csv_file = filter(None, obj.getvalue().split('\n'))
+        self.assertMatchesCsv(csv_file, self.custom_order_csv)
+
