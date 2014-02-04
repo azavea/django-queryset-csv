@@ -51,12 +51,12 @@ class ValidateCleanFilenameTests(TestCase):
 
 class SanitizeUnicodeRecordTests(TestCase):
     def test_sanitize(self):
-        record = {'name': 'Ged',
-                  'nickname': u'\ufeffSparrowhawk'}
+        record = {'name': 'Tenar',
+                  'nickname': u'\ufeffThe White Lady of Gont'}
         sanitized = djqscsv._sanitize_unicode_record(record)
         self.assertEqual(sanitized,
-                         {'name': 'Ged',
-                          'nickname': '\xef\xbb\xbfSparrowhawk'})
+                         {'name': 'Tenar',
+                          'nickname': '\xef\xbb\xbfThe White Lady of Gont'})
 
 
 class AppendDatestampTests(TestCase):
@@ -112,20 +112,24 @@ class WriteCSVDataTests(CSVTestCase):
         self.full_verbose_csv = [
             ['\xef\xbb\xbfID', 'Person\'s name', 'address', 'Info on Person'],
             ['1', 'vetch', 'iffish', 'wizard'],
-            ['2', 'nemmerle', 'roke', 'arch mage']]
+            ['2', 'nemmerle', 'roke', 'deceased arch mage'],
+            ['3', 'ged', 'gont', 'former arch mage']]
 
         self.full_csv = [['\xef\xbb\xbfid', 'name', 'address', 'info'],
                          ['1', 'vetch', 'iffish', 'wizard'],
-                         ['2', 'nemmerle', 'roke', 'arch mage']]
+                         ['2', 'nemmerle', 'roke', 'deceased arch mage'],
+                         ['3', 'ged', 'gont', 'former arch mage']]
 
         self.limited_verbose_csv = [
             ['\xef\xbb\xbfPerson\'s name', 'address', 'Info on Person'],
             ['vetch', 'iffish', 'wizard'],
-            ['nemmerle', 'roke', 'arch mage']]
+            ['nemmerle', 'roke', 'deceased arch mage'],
+            ['ged', 'gont', 'former arch mage']]
 
         self.limited_csv = [['\xef\xbb\xbfname', 'address', 'info'],
                             ['vetch', 'iffish', 'wizard'],
-                            ['nemmerle', 'roke', 'arch mage']]
+                            ['nemmerle', 'roke', 'deceased arch mage'],
+                            ['ged', 'gont', 'former arch mage']]
 
     def test_write_csv_full_terse(self):
         obj = StringIO()
