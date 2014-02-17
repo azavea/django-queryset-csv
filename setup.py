@@ -5,9 +5,9 @@ author_email = 'slamb@azavea.com'
 
 setup(
     name='django-queryset-csv',
-    version='0.2.4',
+    version='0.2.5',
     description='A simple python module for writing querysets to csv',
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     author=author,
     author_email=author_email,
     maintainer=author,
