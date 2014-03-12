@@ -6,13 +6,13 @@ from django import VERSION as DJANGO_VERSION
 import csv
 import itertools
 
-from .context import djqscsv
+from djqscsv_tests.context import djqscsv
 
-from .context import SELECT, EXCLUDE, AS
+from djqscsv_tests.context import SELECT, EXCLUDE, AS
 
-from .models import Person
+from djqscsv_tests.models import Person
 
-from .util import create_people_and_get_queryset
+from djqscsv_tests.util import create_people_and_get_queryset
 
 from django.utils import six
 
