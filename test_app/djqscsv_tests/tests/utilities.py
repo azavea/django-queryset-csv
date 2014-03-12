@@ -1,9 +1,9 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
-from .context import djqscsv
+from djqscsv_tests.context import djqscsv
 
-from .util import create_people_and_get_queryset
+from djqscsv_tests.util import create_people_and_get_queryset
 
 # Test the various helper functions that assist the
 # csv creation process, but don't participate in it
