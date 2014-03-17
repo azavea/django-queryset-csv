@@ -170,8 +170,38 @@ class WalkRelationshipTests(CSVTestCase):
 
         self.assertQuerySetBecomesCsv(qs, self.FULL_PERSON_CSV_WITH_RELATED)
 
+class ColumnOrderingTests(CSVTestCase):
+    def setUp(self):
+        self.qs = create_people_and_get_queryset()
 
-class OrderingTests(CSVTestCase):
+    def test_custom_column_order(self):
+        ordered_csv = SELECT(self.BASE_CSV,
+                             'hobby_id',
+                             'info',
+                             'name',
+                             'address')
+
+        with self.assertRaises(AssertionError):
+            self.assertQuerySetBecomesCsv(self.qs, ordered_csv)
+
+        qs = self.qs.values('hobby_id', 'info', 'name', 'address')
+
+        self.assertQuerySetBecomesCsv(qs, ordered_csv,
+                                      use_verbose_names=False)
+
+    def test_no_values_matches_models_file(self):
+        csv = SELECT(self.BASE_CSV,
+                     'id',
+                     'name',
+                     'address',
+                     'info',
+                     'hobby_id')
+
+        self.assertQuerySetBecomesCsv(self.qs, csv,
+                                      use_verbose_names=False)
+
+
+class ExtraOrderingTests(CSVTestCase):
 
     def setUp(self):
         self.qs = create_people_and_get_queryset().extra(
