@@ -8,3 +8,6 @@ class Person(models.Model):
     address = models.CharField(max_length=255)
     info = models.TextField(verbose_name="Info on Person")
     hobby = models.ForeignKey(Activity)
+
+    def __unicode__(self):
+        return self.name
