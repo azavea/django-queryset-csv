@@ -88,18 +88,19 @@ def write_csv(queryset, file_obj, field_header_map=None,
 
     # verbose_name defaults to the raw field name, so in either case
     # this will produce a complete mapping of field names to column names
-    name_map = {field: field for field in field_names}
+    name_map = dict((field, field) for field in field_names)
     if use_verbose_names:
-        name_map.update({field.name: unicode(field.verbose_name)
-                         for field in queryset.model._meta.fields
-                         if field.name in field_names})
+        name_map.update(
+            dict((field.name, unicode(field.verbose_name))
+                 for field in queryset.model._meta.fields
+                 if field.name in field_names))
 
     # merge the custom field headers into the verbose/raw defaults, if provided
     _field_header_map = field_header_map or {}
     merged_header_map = name_map.copy()
     merged_header_map.update(_field_header_map)
     if extra_columns:
-        merged_header_map.update({k: k for k in extra_columns})
+        merged_header_map.update(dict((k, k) for k in extra_columns))
     writer.writerow(merged_header_map)
 
     for record in values_qs:
