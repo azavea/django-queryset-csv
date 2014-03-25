@@ -24,6 +24,15 @@ This tool was created out of repeatedly needing to do the following in django:
 
 For more detailed documentation, please read `this blog post. <http://www.azavea.com/blogs/labs/2014/03/exporting-django-querysets-to-csv/>`_
 
+installation
+------------
+
+Run::
+
+   pip install django-queryset-csv
+   
+Supports Python 2.6 and 2.7, Django 1.5 and 1.6.
+
 usage
 -----
 Perform all filtering and field authorization in your view using ``.filter()`` and ``.values()``.
