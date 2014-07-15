@@ -1,3 +1,5 @@
+import datetime
+
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
@@ -45,6 +47,14 @@ class SanitizeUnicodeRecordTests(TestCase):
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
                           'nickname': '\xef\xbb\xbfThe White Lady of Gont'})
+
+    def test_sanitize_date(self):
+        record = {'name': 'Tenar',
+                  'created': datetime.datetime(1, 1, 1)}
+        sanitized = djqscsv._sanitize_unicode_record(record)
+        self.assertEqual(sanitized,
+                         {'name': 'Tenar',
+                          'created': '0001-01-01T00:00:00'})
 
 
 class AppendDatestampTests(TestCase):

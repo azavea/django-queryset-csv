@@ -140,8 +140,10 @@ def _validate_and_clean_filename(filename):
 def _sanitize_unicode_record(record):
 
     def _sanitize_value(value):
-        if isinstance(val, unicode):
+        if isinstance(value, unicode):
             return value.encode("utf-8")
+        elif isinstance(value, datetime.datetime):
+            return value.isoformat().encode("utf-8")
         else:
             return localize(value)
 
