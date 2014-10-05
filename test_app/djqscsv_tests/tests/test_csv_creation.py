@@ -27,8 +27,8 @@ class CSVTestCase(TestCase):
     def setUp(self):
         self.qs = create_people_and_get_queryset()
 
-    def assertMatchesCsv(self, csv_file, expected_data):
-        csv_data = csv.reader(csv_file)
+    def assertMatchesCsv(self, csv_file, expected_data, delimiter=','):
+        csv_data = csv.reader(csv_file, delimiter=delimiter)
         iteration_happened = False
         is_first = True
         test_pairs = itertools.izip_longest(csv_data, expected_data,
@@ -255,11 +255,16 @@ class RenderToCSVResponseTests(CSVTestCase):
                                  r'attachment; filename=person_export.csv;')
 
 
-    def test_render_to_csv_response(self):
+    def test_render_to_csv_response(self, delimiter=','):
         response = djqscsv.render_to_csv_response(self.qs,
                                                   filename="test_csv",
-                                                  use_verbose_names=False)
+                                                  use_verbose_names=False,
+                                                  delimiter=delimiter)
         self.assertEqual(response['Content-Type'], 'text/csv')
         self.assertMatchesCsv(response.content.split('\n'),
-                              self.FULL_PERSON_CSV_NO_VERBOSE)
+                              self.FULL_PERSON_CSV_NO_VERBOSE,
+                              delimiter=delimiter)
+
+    def test_render_to_csv_response_with_another_delimiter(self):
+        self.test_render_to_csv_response(delimiter=';')
 

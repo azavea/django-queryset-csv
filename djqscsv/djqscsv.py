@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.conf import settings
 if not settings.configured:
     # required to import ValuesQuerySet
-    settings.configure() # pragma: no cover
+    settings.configure()  # pragma: no cover
 
 from django.db.models.query import ValuesQuerySet
 
@@ -24,7 +24,7 @@ class CSVException(Exception):
 
 def render_to_csv_response(queryset, filename=None, append_datestamp=False,
                            field_header_map=None, use_verbose_names=True,
-                           field_order=None):
+                           field_order=None, delimiter=','):
     """
     provides the boilerplate for making a CSV http response.
     takes a filename or generates one from the queryset's model.
@@ -41,13 +41,14 @@ def render_to_csv_response(queryset, filename=None, append_datestamp=False,
     response['Content-Disposition'] = 'attachment; filename=%s;' % filename
     response['Cache-Control'] = 'no-cache'
 
-    write_csv(queryset, response, field_header_map, use_verbose_names, field_order)
+    write_csv(queryset, response, field_header_map,
+              use_verbose_names, field_order, delimiter)
 
     return response
 
 
 def write_csv(queryset, file_obj, field_header_map=None,
-              use_verbose_names=True, field_order=None):
+              use_verbose_names=True, field_order=None, delimiter=','):
     """
     The main worker function. Writes CSV data to a file object based on the
     contents of the queryset.
@@ -79,12 +80,11 @@ def write_csv(queryset, file_obj, field_header_map=None,
         # go through the field_names and put the ones
         # that appear in the ordering list first
         field_names = ([field for field in field_order
-                       if field in field_names] +
+                        if field in field_names] +
                        [field for field in field_names
                         if field not in field_order])
 
-
-    writer = csv.DictWriter(file_obj, field_names)
+    writer = csv.DictWriter(file_obj, field_names, delimiter=delimiter)
 
     # verbose_name defaults to the raw field name, so in either case
     # this will produce a complete mapping of field names to column names
