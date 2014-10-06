@@ -6,11 +6,13 @@ Used internally, subject to change without notice.
 This module may later be officially supported.
 """
 
+
 def _transform(dataset, arg):
     if isinstance(arg, str):
         return (dataset[0].index(arg), arg)
     elif isinstance(arg, tuple):
         return (dataset[0].index(arg[0]), arg[1])
+
 
 def SELECT(dataset, *args):
     # turn the args into indices based on the first row
@@ -25,10 +27,12 @@ def SELECT(dataset, *args):
                 for datarow in dataset[1:]]
     return results
 
+
 def EXCLUDE(dataset, *args):
     antiargs = [value for index, value in enumerate(dataset[0])
-               if not index in args and not value in args]
+                if index not in args and value not in args]
     return SELECT(dataset, *antiargs)
+
 
 def AS(field, display_name):
     return (field, display_name)

@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.conf import settings
 if not settings.configured:
     # required to import ValuesQuerySet
-    settings.configure() # pragma: no cover
+    settings.configure()  # pragma: no cover
 
 from django.db.models.query import ValuesQuerySet
 
@@ -23,8 +23,7 @@ class CSVException(Exception):
 
 
 def render_to_csv_response(queryset, filename=None, append_datestamp=False,
-                           field_header_map=None, use_verbose_names=True,
-                           field_order=None):
+                           **kwargs):
     """
     provides the boilerplate for making a CSV http response.
     takes a filename or generates one from the queryset's model.
@@ -41,7 +40,7 @@ def render_to_csv_response(queryset, filename=None, append_datestamp=False,
     response['Content-Disposition'] = 'attachment; filename=%s;' % filename
     response['Cache-Control'] = 'no-cache'
 
-    write_csv(queryset, response, field_header_map, use_verbose_names, field_order)
+    write_csv(queryset, response, **kwargs)
 
     return response
 
@@ -82,7 +81,6 @@ def write_csv(queryset, file_obj, field_header_map=None,
                        if field in field_names] +
                        [field for field in field_names
                         if field not in field_order])
-
 
     writer = csv.DictWriter(file_obj, field_names)
 
