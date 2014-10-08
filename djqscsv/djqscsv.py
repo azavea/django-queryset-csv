@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.conf import settings
 if not settings.configured:
     # required to import ValuesQuerySet
-    settings.configure() # pragma: no cover
+    settings.configure()  # pragma: no cover
 
 from django.db.models.query import ValuesQuerySet
 
@@ -17,14 +17,19 @@ from django.utils import six
 
 """ A simple python package for turning django models into csvs """
 
+# Keyword arguments that will be used by this module
+# the rest will be passed along to the csv writer
+DJQSCSV_KWARGS = {'field_header_map': None,
+                  'use_verbose_names': True,
+                  'field_order': None}
+
 
 class CSVException(Exception):
     pass
 
 
 def render_to_csv_response(queryset, filename=None, append_datestamp=False,
-                           field_header_map=None, use_verbose_names=True,
-                           field_order=None):
+                           **kwargs):
     """
     provides the boilerplate for making a CSV http response.
     takes a filename or generates one from the queryset's model.
@@ -41,17 +46,27 @@ def render_to_csv_response(queryset, filename=None, append_datestamp=False,
     response['Content-Disposition'] = 'attachment; filename=%s;' % filename
     response['Cache-Control'] = 'no-cache'
 
-    write_csv(queryset, response, field_header_map, use_verbose_names, field_order)
+    write_csv(queryset, response, **kwargs)
 
     return response
 
 
-def write_csv(queryset, file_obj, field_header_map=None,
-              use_verbose_names=True, field_order=None):
+def write_csv(queryset, file_obj, **kwargs):
     """
     The main worker function. Writes CSV data to a file object based on the
     contents of the queryset.
     """
+
+    # process keyword arguments to pull out the ones used by this function
+    field_header_map = kwargs.get('field_header_map', {})
+    use_verbose_names = kwargs.get('use_verbose_names', True)
+    field_order = kwargs.get('field_order', None)
+
+    csv_kwargs = {}
+
+    for key, val in six.iteritems(kwargs):
+        if key not in DJQSCSV_KWARGS:
+            csv_kwargs[key] = val
 
     # add BOM to suppor CSVs in MS Excel
     file_obj.write(u'\ufeff'.encode('utf8'))
@@ -83,8 +98,7 @@ def write_csv(queryset, file_obj, field_header_map=None,
                        [field for field in field_names
                         if field not in field_order])
 
-
-    writer = csv.DictWriter(file_obj, field_names)
+    writer = csv.DictWriter(file_obj, field_names, **csv_kwargs)
 
     # verbose_name defaults to the raw field name, so in either case
     # this will produce a complete mapping of field names to column names
@@ -96,9 +110,8 @@ def write_csv(queryset, file_obj, field_header_map=None,
                  if field.name in field_names))
 
     # merge the custom field headers into the verbose/raw defaults, if provided
-    _field_header_map = field_header_map or {}
     merged_header_map = name_map.copy()
-    merged_header_map.update(_field_header_map)
+    merged_header_map.update(field_header_map)
     if extra_columns:
         merged_header_map.update(dict((k, k) for k in extra_columns))
     writer.writerow(merged_header_map)

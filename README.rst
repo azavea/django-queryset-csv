@@ -31,7 +31,7 @@ Run::
 
    pip install django-queryset-csv
    
-Supports Python 2.6 and 2.7, Django 1.5 and 1.6.
+Supports Python 2.6 and 2.7, Django 1.5, 1.6, and 1.7.
 
 usage
 -----
@@ -69,3 +69,24 @@ views.py::
   def csv_view(request):
       people = Person.objects.values('name', 'favorite_food__name')
       return render_to_csv_response(people)
+
+keyword arguments
+-----------------
+
+This module exports two functions that write CSVs, ``render_to_csv_response`` and ``write_csv``. Both of these functions require their own positional arguments. In addition, they both take three optional keyword arguments:
+
+* ``field_header_map`` - (default: ``None``) A dictionary mapping names of model fields to column header names. If specified, the csv writer will use these column headers. Otherwise, it will use defer to other parameters for rendering column names.
+* ``use_verbose_names`` - (default: ``True``) A boolean determining whether to use the django field's ``verbose_name``, or to use it's regular field name as a column header. Note that if a given field is found in the ``field_header_map``, this value will take precendence.
+* ``field_order`` - (default: ``None``) A list of fields to determine the sort order. This list need not be complete: any fields not specified will follow those in the list with the order they would have otherwise used.
+
+The remaining keyword arguments are *passed through* to the csv writer. For example, you can export a CSV with a different delimiter::
+
+views.py::
+
+  from djqscsv import render_to_csv_response
+
+  def csv_view(request):
+      people = Person.objects.values('name', 'favorite_food__name')
+      return render_to_csv_response(people, delimiter='|')
+
+For more details on possible arguments, see the documentation on `DictWriter <https://docs.python.org/2/library/csv.html#csv.DictWriter>`_.
