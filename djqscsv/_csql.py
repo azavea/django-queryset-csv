@@ -6,12 +6,19 @@ Used internally, subject to change without notice.
 This module may later be officially supported.
 """
 
+def _identity(x):
+    return x
 
 def _transform(dataset, arg):
     if isinstance(arg, str):
-        return (dataset[0].index(arg), arg)
-    elif isinstance(arg, tuple):
-        return (dataset[0].index(arg[0]), arg[1])
+        field = arg
+        display_name = arg
+        transformer = _identity
+    else:
+        field, display_name, transformer = arg
+        if field is None:
+            field = dataset[0][0]
+    return (dataset[0].index(field), display_name, transformer)
 
 
 def SELECT(dataset, *args):
@@ -23,7 +30,7 @@ def SELECT(dataset, *args):
     results += [[header[1] for header in index_headers]]
 
     # add the rest of the rows
-    results += [[datarow[i] for i, h in index_headers]
+    results += [[trans(datarow[i]) for i, h, trans in index_headers]
                 for datarow in dataset[1:]]
     return results
 
@@ -34,5 +41,8 @@ def EXCLUDE(dataset, *args):
     return SELECT(dataset, *antiargs)
 
 
+def CONSTANT(value, display_name):
+    return (None, display_name, lambda x: value)
+    
 def AS(field, display_name):
-    return (field, display_name)
+    return (field, display_name, _identity)

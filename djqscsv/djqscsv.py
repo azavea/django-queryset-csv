@@ -90,6 +90,10 @@ def write_csv(queryset, file_obj, **kwargs):
     if extra_columns:
         field_names += extra_columns
 
+    aggregate_columns = list(values_qs.query.aggregate_select)
+    if aggregate_columns:
+        field_names += aggregate_columns
+
     if field_order:
         # go through the field_names and put the ones
         # that appear in the ordering list first

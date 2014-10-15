@@ -1,3 +1,4 @@
+from django.db.models import Count
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
@@ -8,7 +9,7 @@ import itertools
 
 from djqscsv_tests.context import djqscsv
 
-from djqscsv_tests.context import SELECT, EXCLUDE, AS
+from djqscsv_tests.context import SELECT, EXCLUDE, AS, CONSTANT
 
 from djqscsv_tests.models import Person
 
@@ -211,6 +212,22 @@ class ColumnOrderingTests(CSVTestCase):
 
         self.assertQuerySetBecomesCsv(self.qs, csv,
                                       use_verbose_names=False)
+
+
+class AggregateTests(CSVTestCase):
+
+    def setUp(self):
+        self.qs = create_people_and_get_queryset().annotate(num_hobbies=Count('hobby'))
+
+    def test_aggregate(self):
+        csv_with_aggregate = SELECT(self.FULL_PERSON_CSV,
+                                    'ID',
+                                    "Person's name",
+                                    'address',
+                                    "Info on Person",
+                                    'hobby_id',
+                                    CONSTANT('1', 'num_hobbies'))
+        self.assertQuerySetBecomesCsv(self.qs, csv_with_aggregate)
 
 
 class ExtraOrderingTests(CSVTestCase):
