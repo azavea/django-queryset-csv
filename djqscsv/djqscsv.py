@@ -21,7 +21,8 @@ from django.utils import six
 # the rest will be passed along to the csv writer
 DJQSCSV_KWARGS = {'field_header_map': None,
                   'use_verbose_names': True,
-                  'field_order': None}
+                  'field_order': None,
+                  'datetime_formatter': None}
 
 
 class CSVException(Exception):
@@ -61,6 +62,7 @@ def write_csv(queryset, file_obj, **kwargs):
     field_header_map = kwargs.get('field_header_map', {})
     use_verbose_names = kwargs.get('use_verbose_names', True)
     field_order = kwargs.get('field_order', None)
+    datetime_formatter = kwargs.get('datetime_formatter', None)
 
     csv_kwargs = {}
 
@@ -121,7 +123,7 @@ def write_csv(queryset, file_obj, **kwargs):
     writer.writerow(merged_header_map)
 
     for record in values_qs:
-        record = _sanitize_unicode_record(record)
+        record = _sanitize_unicode_record(datetime_formatter, record)
         writer.writerow(record)
 
 
@@ -154,13 +156,17 @@ def _validate_and_clean_filename(filename):
     return filename
 
 
-def _sanitize_unicode_record(record):
+def _sanitize_unicode_record(datetime_formatter, record):
 
     def _sanitize_value(value):
         if isinstance(value, unicode):
             return value.encode("utf-8")
         elif isinstance(value, datetime.datetime):
-            return value.isoformat().encode("utf-8")
+            if datetime_formatter:
+                newval = datetime_formatter(value)
+            else:
+                newval = value.isoformat()
+            return newval.encode("utf-8")
         else:
             return localize(value)
 

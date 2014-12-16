@@ -78,6 +78,7 @@ This module exports two functions that write CSVs, ``render_to_csv_response`` an
 - ``field_header_map`` - (default: ``None``) A dictionary mapping names of model fields to column header names. If specified, the csv writer will use these column headers. Otherwise, it will use defer to other parameters for rendering column names.
 - ``use_verbose_names`` - (default: ``True``) A boolean determining whether to use the django field's ``verbose_name``, or to use it's regular field name as a column header. Note that if a given field is found in the ``field_header_map``, this value will take precendence.
 - ``field_order`` - (default: ``None``) A list of fields to determine the sort order. This list need not be complete: any fields not specified will follow those in the list with the order they would have otherwise used.
+- ``datetime_formatter`` - (default: ``None``) A function that takes a datetime.datetime object and returns a string. If none is provided, ``.isoformat()`` is used.
 
 The remaining keyword arguments are *passed through* to the csv writer. For example, you can export a CSV with a different delimiter.
 
