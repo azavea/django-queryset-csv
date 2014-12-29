@@ -2,7 +2,6 @@ import csv
 import datetime
 
 from django.core.exceptions import ValidationError
-from django.templatetags.l10n import localize
 from django.utils.text import slugify
 from django.http import HttpResponse
 
@@ -20,6 +19,7 @@ from django.utils import six
 # Keyword arguments that will be used by this module
 # the rest will be passed along to the csv writer
 DJQSCSV_KWARGS = {'field_header_map': None,
+                  'field_serializer_map': None,
                   'use_verbose_names': True,
                   'field_order': None}
 
@@ -59,6 +59,7 @@ def write_csv(queryset, file_obj, **kwargs):
 
     # process keyword arguments to pull out the ones used by this function
     field_header_map = kwargs.get('field_header_map', {})
+    field_serializer_map = kwargs.get('field_serializer_map', {})
     use_verbose_names = kwargs.get('use_verbose_names', True)
     field_order = kwargs.get('field_order', None)
 
@@ -121,7 +122,7 @@ def write_csv(queryset, file_obj, **kwargs):
     writer.writerow(merged_header_map)
 
     for record in values_qs:
-        record = _sanitize_unicode_record(record)
+        record = _sanitize_unicode_record(field_serializer_map, record)
         writer.writerow(record)
 
 
@@ -154,20 +155,31 @@ def _validate_and_clean_filename(filename):
     return filename
 
 
-def _sanitize_unicode_record(record):
+def _sanitize_unicode_record(field_serializer_map, record):
 
-    def _sanitize_value(value):
+    def _serialize_value(value):
+        # provide default serializer for the case when
+        # non text values get sent without a serializer
+        if isinstance(value, datetime.datetime):
+            return value.isoformat()
+        else:
+            return unicode(value)
+
+    def _sanitize_text(value):
+        # make sure every text value is of type 'str', coercing unicode
         if isinstance(value, unicode):
             return value.encode("utf-8")
-        elif isinstance(value, datetime.datetime):
-            return value.isoformat().encode("utf-8")
+        elif isinstance(value, str):
+            return value
         else:
-            return localize(value)
+            return str(value).encode("utf-8")
 
     obj = {}
     for key, val in six.iteritems(record):
         if val is not None:
-            obj[_sanitize_value(key)] = _sanitize_value(val)
+            serializer = field_serializer_map.get(key, _serialize_value)
+            newval = serializer(val)
+            obj[_sanitize_text(key)] = _sanitize_text(newval)
 
     return obj
 
