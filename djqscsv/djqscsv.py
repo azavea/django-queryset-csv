@@ -110,7 +110,7 @@ def write_csv(queryset, file_obj, **kwargs):
     name_map = dict((field, field) for field in field_names)
     if use_verbose_names:
         name_map.update(
-            dict((field.name, unicode(field.verbose_name))
+            dict((field.name, field.verbose_name.encode('utf-8'))
                  for field in queryset.model._meta.fields
                  if field.name in field_names))
 
