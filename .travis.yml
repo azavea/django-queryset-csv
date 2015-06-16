@@ -6,10 +6,13 @@ env:
   - DJANGO=1.5 RUNNER="coverage run --source=djqscsv" SUCCESS="coveralls"
   - DJANGO=1.6 RUNNER="python" SUCCESS="echo DONE"
   - DJANGO=1.7 RUNNER="python" SUCCESS="echo DONE"
+  - DJANGO=1.8 RUNNER="python" SUCCESS="echo DONE"
 matrix:
   exclude:
     - python: "2.6"
       env: DJANGO=1.7 RUNNER="python" SUCCESS="echo DONE"
+    - python: "2.6"
+      env: DJANGO=1.8 RUNNER="python" SUCCESS="echo DONE"
 install:
   - pip install -q Django==$DJANGO
   - pip install -r dev_requirements.txt
