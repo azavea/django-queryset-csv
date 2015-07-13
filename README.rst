@@ -1,17 +1,14 @@
 .. image:: https://travis-ci.org/azavea/django-queryset-csv.png
-   :target: https://travis-ci.org/azavea/django-queryset-csv
+   :target: https://travis-ci.org/azavea/django-queryset-csv/
 
-.. image:: https://coveralls.io/repos/azavea/django-queryset-csv/badge.png
-   :target: https://coveralls.io/r/azavea/django-queryset-csv
+.. image:: https://coveralls.io/repos/azavea/django-queryset-csv/badge.svg?branch=master&service=github
+   :target: https://coveralls.io/r/azavea/django-queryset-csv/
 
-.. image:: https://pypip.in/v/django-queryset-csv/badge.png
+.. image:: https://img.shields.io/pypi/dm/Django.svg
    :target: http://pypi.python.org/pypi/django-queryset-csv/
 
-.. image:: https://pypip.in/d/django-queryset-csv/badge.png
+.. image:: https://img.shields.io/pypi/v/django-queryset-csv.svg
    :target: http://pypi.python.org/pypi/django-queryset-csv/
-
-.. image:: https://pypip.in/license/django-queryset-csv/badge.png
-   :target: http://www.gnu.org/licenses/gpl.html
 
 a CSV exporter for django querysets.
 
