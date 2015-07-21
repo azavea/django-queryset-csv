@@ -28,7 +28,7 @@ Run::
 
    pip install django-queryset-csv
    
-Supports Python 2.6 and 2.7, Django 1.5, 1.6, and 1.7.
+Supports Python 2.6 and 2.7, Django >= 1.5.
 
 usage
 -----
