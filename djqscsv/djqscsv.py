@@ -69,8 +69,8 @@ def write_csv(queryset, file_obj, **kwargs):
         if key not in DJQSCSV_KWARGS:
             csv_kwargs[key] = val
 
-    # add BOM to suppor CSVs in MS Excel
-    file_obj.write(u'\ufeff'.encode('utf8'))
+    # add BOM to support CSVs in MS Excel (for Windows only)
+    file_obj.write(_safe_utf8_encode(u'\ufeff'))
 
     # the CSV must always be built from a values queryset
     # in order to introspect the necessary fields.
