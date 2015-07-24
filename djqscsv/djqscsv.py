@@ -70,7 +70,7 @@ def write_csv(queryset, file_obj, **kwargs):
             csv_kwargs[key] = val
 
     # add BOM to support CSVs in MS Excel (for Windows only)
-    file_obj.write(_safe_utf8_encode(u'\ufeff'))
+    file_obj.write(_safe_utf8_stringify(u'\ufeff'))
 
     # the CSV must always be built from a values queryset
     # in order to introspect the necessary fields.
@@ -110,7 +110,7 @@ def write_csv(queryset, file_obj, **kwargs):
     name_map = dict((field, field) for field in field_names)
     if use_verbose_names:
         name_map.update(
-            dict((field.name, field.verbose_name.encode('utf-8'))
+            dict((field.name, field.verbose_name)
                  for field in queryset.model._meta.fields
                  if field.name in field_names))
 
@@ -119,6 +119,9 @@ def write_csv(queryset, file_obj, **kwargs):
     merged_header_map.update(field_header_map)
     if extra_columns:
         merged_header_map.update(dict((k, k) for k in extra_columns))
+
+    merged_header_map = dict((k, _safe_utf8_stringify(v))
+                             for (k, v) in merged_header_map.items())
     writer.writerow(merged_header_map)
 
     for record in values_qs:
@@ -155,6 +158,15 @@ def _validate_and_clean_filename(filename):
     return filename
 
 
+def _safe_utf8_stringify(value):
+    if isinstance(value, str):
+        return value
+    elif isinstance(value, unicode):
+        return value.encode('utf-8')
+    else:
+        return unicode(value).encode('utf-8')
+
+
 def _sanitize_unicode_record(field_serializer_map, record):
 
     def _serialize_value(value):
@@ -165,21 +177,12 @@ def _sanitize_unicode_record(field_serializer_map, record):
         else:
             return unicode(value)
 
-    def _sanitize_text(value):
-        # make sure every text value is of type 'str', coercing unicode
-        if isinstance(value, unicode):
-            return value.encode("utf-8")
-        elif isinstance(value, str):
-            return value
-        else:
-            return str(value).encode("utf-8")
-
     obj = {}
     for key, val in six.iteritems(record):
         if val is not None:
             serializer = field_serializer_map.get(key, _serialize_value)
             newval = serializer(val)
-            obj[_sanitize_text(key)] = _sanitize_text(newval)
+            obj[_safe_utf8_stringify(key)] = _safe_utf8_stringify(newval)
 
     return obj
 

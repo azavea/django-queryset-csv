@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 
 from django.test import TestCase
@@ -116,3 +117,23 @@ class GenerateFilenameTests(TestCase):
                                  r'person_export_[0-9]{8}.csv')
 
 
+class SafeUtf8EncodeTest(TestCase):
+    def test_safe_utf8_encode(self):
+
+        class Foo(object):
+            def __unicode__(self):
+                return u'¯\_(ツ)_/¯'
+            def __str_(self):
+                return self.__unicode__().encode('utf-8')
+
+        for val in (u'¯\_(ツ)_/¯', 'plain', r'raw',
+                    b'123', 11312312312313L, False,
+                    datetime.datetime(2001, 01, 01),
+                    4, None, [], set(), Foo):
+
+            first_pass = djqscsv._safe_utf8_stringify(val)
+            second_pass = djqscsv._safe_utf8_stringify(first_pass)
+            third_pass = djqscsv._safe_utf8_stringify(second_pass)
+            self.assertEqual(first_pass, second_pass)
+            self.assertEqual(second_pass, third_pass)
+            self.assertEqual(type(first_pass), type(third_pass))
