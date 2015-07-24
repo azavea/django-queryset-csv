@@ -68,7 +68,7 @@ class CSVTestCase(TestCase):
         if DJANGO_VERSION[:2] == (1, 5):
             with self.assertRaises(djqscsv.CSVException):
                 djqscsv.write_csv(qs, obj)
-        elif DJANGO_VERSION[:2] == (1, 6):
+        else:
             djqscsv.write_csv(qs, obj,
                               **kwargs)
             self.assertEqual(obj.getvalue(), expected_data)
@@ -78,10 +78,13 @@ class CSVTestCase(TestCase):
     # use this data structure to build smaller data sets
     BASE_CSV = [
         ['id', 'name', 'address',
-         'info', 'hobby_id', 'hobby__name', 'Most Powerful'],
-        ['1', 'vetch', 'iffish', 'wizard', '1', 'Doing Magic', '0'],
-        ['2', 'nemmerle', 'roke', 'deceased arch mage', '2', 'Resting', '1'],
-        ['3', 'ged', 'gont', 'former arch mage', '2', 'Resting', '1']]
+         'info', 'hobby_id', 'born', 'hobby__name', 'Most Powerful'],
+        ['1', 'vetch', 'iffish',
+         'wizard', '1', '2001-01-01T01:01:00', 'Doing Magic', '0'],
+        ['2', 'nemmerle', 'roke',
+         'deceased arch mage', '2', '2001-01-01T01:01:00', 'Resting', '1'],
+        ['3', 'ged', 'gont',
+         'former arch mage', '2', '2001-01-01T01:01:00', 'Resting', '1']]
 
     FULL_PERSON_CSV_WITH_RELATED = SELECT(BASE_CSV,
                                           AS('id', 'ID'),
@@ -89,6 +92,7 @@ class CSVTestCase(TestCase):
                                           'address',
                                           AS('info', 'Info on Person'),
                                           'hobby_id',
+                                          'born',
                                           'hobby__name')
 
     FULL_PERSON_CSV = EXCLUDE(FULL_PERSON_CSV_WITH_RELATED,
@@ -119,7 +123,7 @@ class WriteCSVDataNoVerboseNamesTests(CSVTestCase):
 
     def test_empty_queryset_no_verbose(self):
         self.assertEmptyQuerySetMatches(
-            '\xef\xbb\xbfid,name,address,info,hobby_id\r\n',
+            '\xef\xbb\xbfid,name,address,info,hobby_id,born\r\n',
             use_verbose_names=False)
 
 
@@ -135,13 +139,17 @@ class WriteCSVDataTests(CSVTestCase):
     def test_empty_queryset(self):
         self.assertEmptyQuerySetMatches(
             '\xef\xbb\xbfID,Person\'s name,address,'
-            'Info on Person,hobby_id\r\n')
+            'Info on Person,hobby_id,born\r\n')
 
 class FieldHeaderMapTests(CSVTestCase):
     def test_write_csv_full_custom_headers(self):
-        overridden_info_csv = ([['ID', "Person's name", 'address',
-                               'INFORMATION', 'hobby_id']] +
-                               self.FULL_PERSON_CSV[1:])
+        overridden_info_csv = SELECT(self.FULL_PERSON_CSV,
+                                     'ID',
+                                     "Person's name",
+                                     'address',
+                                     AS('Info on Person', 'INFORMATION'),
+                                     'hobby_id',
+                                     'born')
 
         self.assertQuerySetBecomesCsv(
             self.qs, overridden_info_csv,
@@ -170,7 +178,8 @@ class FieldHeaderMapTests(CSVTestCase):
 
     def test_empty_queryset_custom_headers(self):
         self.assertEmptyQuerySetMatches(
-            '\xef\xbb\xbfID,Person\'s name,address,INFORMATION,hobby_id\r\n',
+            '\xef\xbb\xbfID,Person\'s name,'
+            'address,INFORMATION,hobby_id,born\r\n',
             field_header_map={ 'info': 'INFORMATION' })
 
 
@@ -179,7 +188,7 @@ class WalkRelationshipTests(CSVTestCase):
     def test_with_related(self):
 
         qs = self.qs.values('id', 'name', 'address', 'info',
-                            'hobby_id', 'hobby__name')
+                            'hobby_id', 'born', 'hobby__name')
 
         self.assertQuerySetBecomesCsv(qs, self.FULL_PERSON_CSV_WITH_RELATED)
 
@@ -208,8 +217,8 @@ class ColumnOrderingTests(CSVTestCase):
                      'name',
                      'address',
                      'info',
-                     'hobby_id')
-
+                     'hobby_id',
+                     'born')
         self.assertQuerySetBecomesCsv(self.qs, csv,
                                       use_verbose_names=False)
 
@@ -226,6 +235,7 @@ class AggregateTests(CSVTestCase):
                                     'address',
                                     "Info on Person",
                                     'hobby_id',
+                                    'born',
                                     CONSTANT('1', 'num_hobbies'))
         self.assertQuerySetBecomesCsv(self.qs, csv_with_aggregate)
 
@@ -243,6 +253,7 @@ class ExtraOrderingTests(CSVTestCase):
                                 'address',
                                 AS('info', 'Info on Person'),
                                 'hobby_id',
+                                'born',
                                 'Most Powerful')
 
         self.assertQuerySetBecomesCsv(self.qs, csv_with_extra)
@@ -255,7 +266,8 @@ class ExtraOrderingTests(CSVTestCase):
                                   AS('name', "Person's name"),
                                   'address',
                                   AS('info', 'Info on Person'),
-                                  'hobby_id')
+                                  'hobby_id',
+                                  'born')
 
         self.assertQuerySetBecomesCsv(self.qs, custom_order_csv,
                                       field_order=['id', 'Most Powerful'])
