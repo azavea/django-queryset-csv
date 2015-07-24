@@ -11,8 +11,6 @@ from djqscsv_tests.context import djqscsv
 
 from djqscsv_tests.context import SELECT, EXCLUDE, AS, CONSTANT
 
-from djqscsv_tests.models import Person
-
 from djqscsv_tests.util import create_people_and_get_queryset
 
 from django.utils import six
@@ -22,6 +20,7 @@ if six.PY3:
     from io import StringIO
 else:
     from StringIO import StringIO
+
 
 class CSVTestCase(TestCase):
 
@@ -38,7 +37,8 @@ class CSVTestCase(TestCase):
         for csv_row, expected_row in test_pairs:
             if is_first:
                 # add the BOM to the data
-                expected_row = ['\xef\xbb\xbf' + expected_row[0]] + expected_row[1:]
+                expected_row = (['\xef\xbb\xbf' + expected_row[0]] +
+                                expected_row[1:])
                 is_first = False
             iteration_happened = True
             assertion_results.append(csv_row == expected_row)
@@ -54,7 +54,6 @@ class CSVTestCase(TestCase):
     def assertNotMatchesCsv(self, *args, **kwargs):
         assertion_results = self.csv_match(*args, **kwargs)
         self.assertFalse(all(assertion_results))
-
 
     def assertQuerySetBecomesCsv(self, qs, expected_data, **kwargs):
         obj = StringIO()
@@ -72,7 +71,6 @@ class CSVTestCase(TestCase):
             djqscsv.write_csv(qs, obj,
                               **kwargs)
             self.assertEqual(obj.getvalue(), expected_data)
-
 
     # the csv data that is returned by the most inclusive query under test.
     # use this data structure to build smaller data sets
@@ -119,7 +117,7 @@ class WriteCSVDataNoVerboseNamesTests(CSVTestCase):
     def test_write_csv_limited_no_verbose(self):
         qs = self.qs.values('name', 'address', 'info')
         self.assertQuerySetBecomesCsv(qs, self.LIMITED_PERSON_CSV_NO_VERBOSE,
-                                          use_verbose_names=False)
+                                      use_verbose_names=False)
 
     def test_empty_queryset_no_verbose(self):
         self.assertEmptyQuerySetMatches(
@@ -140,6 +138,7 @@ class WriteCSVDataTests(CSVTestCase):
         self.assertEmptyQuerySetMatches(
             '\xef\xbb\xbfID,Person\'s name,address,'
             'Info on Person,hobby_id,born\r\n')
+
 
 class FieldHeaderMapTests(CSVTestCase):
     def test_write_csv_full_custom_headers(self):
@@ -163,8 +162,7 @@ class FieldHeaderMapTests(CSVTestCase):
 
         self.assertQuerySetBecomesCsv(
             qs, overridden_info_csv,
-            field_header_map={ 'info': 'INFORMATION' })
-
+            field_header_map={'info': 'INFORMATION'})
 
     def test_write_csv_with_related_custom_headers(self):
         overridden_csv = SELECT(self.FULL_PERSON_CSV_WITH_RELATED,
@@ -174,13 +172,13 @@ class FieldHeaderMapTests(CSVTestCase):
 
         self.assertQuerySetBecomesCsv(
             qs, overridden_csv,
-            field_header_map={ 'hobby__name': 'Name of Activity' })
+            field_header_map={'hobby__name': 'Name of Activity'})
 
     def test_empty_queryset_custom_headers(self):
         self.assertEmptyQuerySetMatches(
             '\xef\xbb\xbfID,Person\'s name,'
             'address,INFORMATION,hobby_id,born\r\n',
-            field_header_map={ 'info': 'INFORMATION' })
+            field_header_map={'info': 'INFORMATION'})
 
 
 class WalkRelationshipTests(CSVTestCase):
@@ -191,6 +189,7 @@ class WalkRelationshipTests(CSVTestCase):
                             'hobby_id', 'born', 'hobby__name')
 
         self.assertQuerySetBecomesCsv(qs, self.FULL_PERSON_CSV_WITH_RELATED)
+
 
 class ColumnOrderingTests(CSVTestCase):
     def setUp(self):
@@ -226,7 +225,8 @@ class ColumnOrderingTests(CSVTestCase):
 class AggregateTests(CSVTestCase):
 
     def setUp(self):
-        self.qs = create_people_and_get_queryset().annotate(num_hobbies=Count('hobby'))
+        self.qs = (create_people_and_get_queryset()
+                   .annotate(num_hobbies=Count('hobby')))
 
     def test_aggregate(self):
         csv_with_aggregate = SELECT(self.FULL_PERSON_CSV,
@@ -244,7 +244,7 @@ class ExtraOrderingTests(CSVTestCase):
 
     def setUp(self):
         self.qs = create_people_and_get_queryset().extra(
-            select={'Most Powerful':"info LIKE '%arch mage%'"})
+            select={'Most Powerful': "info LIKE '%arch mage%'"})
 
     def test_extra_select(self):
         csv_with_extra = SELECT(self.BASE_CSV,
@@ -257,7 +257,6 @@ class ExtraOrderingTests(CSVTestCase):
                                 'Most Powerful')
 
         self.assertQuerySetBecomesCsv(self.qs, csv_with_extra)
-
 
     def test_extra_select_ordering(self):
         custom_order_csv = SELECT(self.BASE_CSV,
@@ -295,7 +294,6 @@ class RenderToCSVResponseTests(CSVTestCase):
         self.assertRegexpMatches(response['Content-Disposition'],
                                  r'attachment; filename=person_export.csv;')
 
-
     def test_render_to_csv_response(self):
         response = djqscsv.render_to_csv_response(self.qs,
                                                   filename="test_csv",
@@ -303,7 +301,6 @@ class RenderToCSVResponseTests(CSVTestCase):
         self.assertEqual(response['Content-Type'], 'text/csv')
         self.assertMatchesCsv(response.content.split('\n'),
                               self.FULL_PERSON_CSV_NO_VERBOSE)
-
 
     def test_render_to_csv_response_other_delimiter(self):
         response = djqscsv.render_to_csv_response(self.qs,
@@ -315,7 +312,6 @@ class RenderToCSVResponseTests(CSVTestCase):
         self.assertMatchesCsv(response.content.split('\n'),
                               self.FULL_PERSON_CSV_NO_VERBOSE,
                               delimiter="|")
-
 
     def test_render_to_csv_fails_on_delimiter_mismatch(self):
         response = djqscsv.render_to_csv_response(self.qs,

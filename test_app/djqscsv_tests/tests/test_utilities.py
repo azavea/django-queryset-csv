@@ -11,6 +11,7 @@ from djqscsv_tests.util import create_people_and_get_queryset
 # csv creation process, but don't participate in it
 # directly.
 
+
 class ValidateCleanFilenameTests(TestCase):
 
     def assertValidatedEquals(self, filename, expected_value):
@@ -63,14 +64,14 @@ class SanitizeUnicodeRecordTests(TestCase):
         this practice.
         """
         record = {'name': 'Tenar'}
-        serializer = {'name': lambda d: len(d) }
+        serializer = {'name': lambda d: len(d)}
         sanitized = djqscsv._sanitize_unicode_record(serializer, record)
         self.assertEqual(sanitized, {'name': '5'})
 
     def test_sanitize_date_with_formatter(self):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1973, 5, 13)}
-        serializer = {'created': lambda d: d.strftime('%Y-%m-%d') }
+        serializer = {'created': lambda d: d.strftime('%Y-%m-%d')}
         sanitized = djqscsv._sanitize_unicode_record(serializer, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',

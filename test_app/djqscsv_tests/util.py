@@ -12,4 +12,3 @@ def create_people_and_get_queryset():
                                  info='former arch mage', hobby=resting)
 
     return Person.objects.all()
-
