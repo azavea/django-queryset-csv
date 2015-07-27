@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 
 from django.test import TestCase
@@ -10,6 +11,7 @@ from djqscsv_tests.util import create_people_and_get_queryset
 # Test the various helper functions that assist the
 # csv creation process, but don't participate in it
 # directly.
+
 
 class ValidateCleanFilenameTests(TestCase):
 
@@ -63,14 +65,14 @@ class SanitizeUnicodeRecordTests(TestCase):
         this practice.
         """
         record = {'name': 'Tenar'}
-        serializer = {'name': lambda d: len(d) }
+        serializer = {'name': lambda d: len(d)}
         sanitized = djqscsv._sanitize_unicode_record(serializer, record)
         self.assertEqual(sanitized, {'name': '5'})
 
     def test_sanitize_date_with_formatter(self):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1973, 5, 13)}
-        serializer = {'created': lambda d: d.strftime('%Y-%m-%d') }
+        serializer = {'created': lambda d: d.strftime('%Y-%m-%d')}
         sanitized = djqscsv._sanitize_unicode_record(serializer, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
@@ -115,3 +117,23 @@ class GenerateFilenameTests(TestCase):
                                  r'person_export_[0-9]{8}.csv')
 
 
+class SafeUtf8EncodeTest(TestCase):
+    def test_safe_utf8_encode(self):
+
+        class Foo(object):
+            def __unicode__(self):
+                return u'¯\_(ツ)_/¯'
+            def __str_(self):
+                return self.__unicode__().encode('utf-8')
+
+        for val in (u'¯\_(ツ)_/¯', 'plain', r'raw',
+                    b'123', 11312312312313L, False,
+                    datetime.datetime(2001, 01, 01),
+                    4, None, [], set(), Foo):
+
+            first_pass = djqscsv._safe_utf8_stringify(val)
+            second_pass = djqscsv._safe_utf8_stringify(first_pass)
+            third_pass = djqscsv._safe_utf8_stringify(second_pass)
+            self.assertEqual(first_pass, second_pass)
+            self.assertEqual(second_pass, third_pass)
+            self.assertEqual(type(first_pass), type(third_pass))
