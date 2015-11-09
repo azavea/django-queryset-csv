@@ -271,6 +271,20 @@ class ExtraOrderingTests(CSVTestCase):
         self.assertQuerySetBecomesCsv(self.qs, custom_order_csv,
                                       field_order=['id', 'Most Powerful'])
 
+    def test_extra_select_header_map(self):
+        csv_with_extra = SELECT(self.BASE_CSV,
+                                AS('id', 'ID'),
+                                AS('name', "Person's name"),
+                                'address',
+                                AS('info', 'Info on Person'),
+                                'hobby_id',
+                                'born',
+                                AS('Most Powerful', 'Sturdiest'))
+
+        self.assertQuerySetBecomesCsv(
+            self.qs, csv_with_extra,
+            field_header_map={'Most Powerful': 'Sturdiest'})
+
 class RenderToCSVResponseTests(CSVTestCase):
 
     def test_render_to_csv_response_with_filename_and_datestamp(self):
