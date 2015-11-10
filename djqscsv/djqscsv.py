@@ -116,9 +116,9 @@ def write_csv(queryset, file_obj, **kwargs):
 
     # merge the custom field headers into the verbose/raw defaults, if provided
     merged_header_map = name_map.copy()
-    merged_header_map.update(field_header_map)
     if extra_columns:
         merged_header_map.update(dict((k, k) for k in extra_columns))
+    merged_header_map.update(field_header_map)
 
     merged_header_map = dict((k, _safe_utf8_stringify(v))
                              for (k, v) in merged_header_map.items())
