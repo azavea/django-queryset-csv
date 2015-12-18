@@ -10,7 +10,9 @@ if not settings.configured:
     # required to import ValuesQuerySet
     settings.configure()  # pragma: no cover
 
-from django.db.models.query import ValuesQuerySet
+from django.db.models import query
+if not hasattr(query, "ValuesIterable"): # Fall back for old versions of django
+    query.ValuesIterable = query.ValuesQuerySet
 
 from django.utils import six
 
@@ -74,7 +76,7 @@ def write_csv(queryset, file_obj, **kwargs):
 
     # the CSV must always be built from a values queryset
     # in order to introspect the necessary fields.
-    if isinstance(queryset, ValuesQuerySet):
+    if isinstance(queryset, query.ValuesIterable):
         values_qs = queryset
     else:
         values_qs = queryset.values()
