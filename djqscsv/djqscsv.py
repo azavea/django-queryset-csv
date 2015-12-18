@@ -6,11 +6,6 @@ from django.utils.text import slugify
 from django.http import HttpResponse
 
 from django.conf import settings
-if not settings.configured:
-    # required to import ValuesQuerySet
-    settings.configure()  # pragma: no cover
-
-from django.db.models.query import ValuesQuerySet
 
 from django.utils import six
 
@@ -74,26 +69,17 @@ def write_csv(queryset, file_obj, **kwargs):
 
     # the CSV must always be built from a values queryset
     # in order to introspect the necessary fields.
-    if isinstance(queryset, ValuesQuerySet):
-        values_qs = queryset
+    if len(queryset) > 0:
+        if not hasattr(queryset[0], "keys"):
+            try:
+                values_qs = queryset.values()
+            except AttributeError:
+                raise CSVException("This doesn't look like a QuerySet or ValuesIterable")
+        else:
+            values_qs = queryset
+        field_names = values_qs[0].keys()
     else:
-        values_qs = queryset.values()
-
-    try:
-        field_names = values_qs.field_names
-
-    except AttributeError:
-        # in django1.5, empty querysets trigger
-        # this exception, but not django 1.6
         raise CSVException("Empty queryset provided to exporter.")
-
-    extra_columns = list(values_qs.query.extra_select)
-    if extra_columns:
-        field_names += extra_columns
-
-    aggregate_columns = list(values_qs.query.aggregate_select)
-    if aggregate_columns:
-        field_names += aggregate_columns
 
     if field_order:
         # go through the field_names and put the ones
@@ -114,15 +100,7 @@ def write_csv(queryset, file_obj, **kwargs):
                  for field in queryset.model._meta.fields
                  if field.name in field_names))
 
-    # merge the custom field headers into the verbose/raw defaults, if provided
-    merged_header_map = name_map.copy()
-    if extra_columns:
-        merged_header_map.update(dict((k, k) for k in extra_columns))
-    merged_header_map.update(field_header_map)
-
-    merged_header_map = dict((k, _safe_utf8_stringify(v))
-                             for (k, v) in merged_header_map.items())
-    writer.writerow(merged_header_map)
+    writer.writerow(name_map)
 
     for record in values_qs:
         record = _sanitize_unicode_record(field_serializer_map, record)
