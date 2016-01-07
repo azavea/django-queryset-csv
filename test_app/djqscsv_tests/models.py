@@ -4,7 +4,7 @@ from django.utils.translation import ugettext as _
 
 from datetime import datetime
 
-SOME_TIME = datetime(2001, 01, 01, 01, 01)
+SOME_TIME = datetime(2001, 1, 1, 1, 1)
 
 
 class Activity(models.Model):

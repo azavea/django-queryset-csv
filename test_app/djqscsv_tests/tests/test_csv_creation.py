@@ -1,3 +1,4 @@
+from builtins import str
 from django.db.models import Count
 from django.test import TestCase
 from django.core.exceptions import ValidationError
@@ -15,8 +16,18 @@ from djqscsv_tests.util import create_people_and_get_queryset
 
 from django.utils import six
 
+try:
+    import itertools.ifilter as filter
+except ImportError:
+    pass
+
+try:
+    from itertools import izip_longest as zip_longest
+    from itertools import izip as zip
+except ImportError:
+    from itertools import zip_longest as zip_longest
+
 if six.PY3:
-    from functools import filter
     from io import StringIO
 else:
     from StringIO import StringIO
@@ -29,16 +40,23 @@ class CSVTestCase(TestCase):
 
     def csv_match(self, csv_file, expected_data, **csv_kwargs):
         assertion_results = []
-        csv_data = csv.reader(csv_file, **csv_kwargs)
+        if six.PY2:
+            csv_file = list(map(lambda x: x.encode('utf-8'), csv_file))
         iteration_happened = False
         is_first = True
-        test_pairs = itertools.izip_longest(csv_data, expected_data,
-                                            fillvalue=[])
+        csv_data = csv.reader(csv_file, **csv_kwargs)
+
+        test_pairs = zip_longest(csv_data, expected_data, fillvalue=[])
+
         for csv_row, expected_row in test_pairs:
             if is_first:
                 # add the BOM to the data
-                expected_row = (['\xef\xbb\xbf' + expected_row[0]] +
-                                expected_row[1:])
+                if six.PY2:
+                    expected_row = ([expected_row[0].encode('utf-8-sig')] +
+                                    expected_row[1:])
+                else:
+                    expected_row = ([str(b'\xef\xbb\xbf'.decode('utf-8'))+expected_row[0]] +
+                                    expected_row[1:])
                 is_first = False
             iteration_happened = True
             assertion_results.append(csv_row == expected_row)
@@ -121,7 +139,7 @@ class WriteCSVDataNoVerboseNamesTests(CSVTestCase):
 
     def test_empty_queryset_no_verbose(self):
         self.assertEmptyQuerySetMatches(
-            '\xef\xbb\xbfid,name,address,info,hobby_id,born\r\n',
+            b'\xef\xbb\xbfid,name,address,info,hobby_id,born\r\n'.decode('utf-8'),
             use_verbose_names=False)
 
 
@@ -136,8 +154,7 @@ class WriteCSVDataTests(CSVTestCase):
 
     def test_empty_queryset(self):
         self.assertEmptyQuerySetMatches(
-            '\xef\xbb\xbfID,Person\'s name,address,'
-            'Info on Person,hobby_id,born\r\n')
+            b'\xef\xbb\xbfID,Person\'s name,address,Info on Person,hobby_id,born\r\n'.decode('utf-8'))
 
 
 class FieldHeaderMapTests(CSVTestCase):
@@ -176,8 +193,7 @@ class FieldHeaderMapTests(CSVTestCase):
 
     def test_empty_queryset_custom_headers(self):
         self.assertEmptyQuerySetMatches(
-            '\xef\xbb\xbfID,Person\'s name,'
-            'address,INFORMATION,hobby_id,born\r\n',
+            str(b'\xef\xbb\xbfID,Person\'s name,address,INFORMATION,hobby_id,born\r\n'.decode('utf-8')),
             field_header_map={'info': 'INFORMATION'})
 
 
@@ -302,7 +318,7 @@ class RenderToCSVResponseTests(CSVTestCase):
         response = djqscsv.render_to_csv_response(self.qs,
                                                   use_verbose_names=False)
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertMatchesCsv(response.content.split('\n'),
+        self.assertMatchesCsv(response.content.decode('utf-8').split('\n'),
                               self.FULL_PERSON_CSV_NO_VERBOSE)
 
         self.assertRegexpMatches(response['Content-Disposition'],
@@ -313,7 +329,7 @@ class RenderToCSVResponseTests(CSVTestCase):
                                                   filename="test_csv",
                                                   use_verbose_names=False)
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertMatchesCsv(response.content.split('\n'),
+        self.assertMatchesCsv(response.content.decode('utf-8').split('\n'),
                               self.FULL_PERSON_CSV_NO_VERBOSE)
 
     def test_render_to_csv_response_other_delimiter(self):
@@ -323,7 +339,7 @@ class RenderToCSVResponseTests(CSVTestCase):
                                                   delimiter='|')
 
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertMatchesCsv(response.content.split('\n'),
+        self.assertMatchesCsv(response.content.decode('utf-8').split('\n'),
                               self.FULL_PERSON_CSV_NO_VERBOSE,
                               delimiter="|")
 
@@ -334,5 +350,5 @@ class RenderToCSVResponseTests(CSVTestCase):
                                                   delimiter='|')
 
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertNotMatchesCsv(response.content.split('\n'),
+        self.assertNotMatchesCsv(response.content.decode('utf-8').split('\n'),
                                  self.FULL_PERSON_CSV_NO_VERBOSE)

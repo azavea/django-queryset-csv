@@ -1,2 +1,4 @@
 coveralls==0.3
 coverage==3.6
+future==0.15.2
+six==1.10.0

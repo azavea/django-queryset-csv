@@ -48,7 +48,7 @@ class SanitizeUnicodeRecordTests(TestCase):
         sanitized = djqscsv._sanitize_unicode_record({}, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
-                          'nickname': '\xef\xbb\xbfThe White Lady of Gont'})
+                          'nickname': b'\xef\xbb\xbfThe White Lady of Gont'.decode('utf-8')})
 
     def test_sanitize_date(self):
         record = {'name': 'Tenar',
@@ -67,7 +67,7 @@ class SanitizeUnicodeRecordTests(TestCase):
         record = {'name': 'Tenar'}
         serializer = {'name': lambda d: len(d)}
         sanitized = djqscsv._sanitize_unicode_record(serializer, record)
-        self.assertEqual(sanitized, {'name': '5'})
+        self.assertEqual(sanitized, {'name': b'5'})
 
     def test_sanitize_date_with_formatter(self):
         record = {'name': 'Tenar',
@@ -121,14 +121,13 @@ class SafeUtf8EncodeTest(TestCase):
     def test_safe_utf8_encode(self):
 
         class Foo(object):
-            def __unicode__(self):
+            def __str__(self):
                 return u'¯\_(ツ)_/¯'
             def __str_(self):
-                return self.__unicode__().encode('utf-8')
-
+                return self.__str__().encode('utf-8')
         for val in (u'¯\_(ツ)_/¯', 'plain', r'raw',
-                    b'123', 11312312312313L, False,
-                    datetime.datetime(2001, 01, 01),
+                    b'123', 11312312312313, False,
+                    datetime.datetime(2001, 1, 1),
                     4, None, [], set(), Foo):
 
             first_pass = djqscsv._safe_utf8_stringify(val)

@@ -1,6 +1,7 @@
 # basic python ignores
 *.pyc
-
+#pycharm .idea
+.idea/
 # build/dist ignores
 dist/*
 *.egg-info/*
