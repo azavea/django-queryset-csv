@@ -3,21 +3,22 @@ python:
   - "2.6"
   - "2.7"
 env:
-  - DJANGO=1.5 RUNNER="coverage run --source=djqscsv" SUCCESS="coveralls"
-  - DJANGO=1.6 RUNNER="python" SUCCESS="echo DONE"
-  - DJANGO=1.7 RUNNER="python" SUCCESS="echo DONE"
-  - DJANGO=1.8 RUNNER="python" SUCCESS="echo DONE"
+  - DJANGO=1.5
+  - DJANGO=1.6
+  - DJANGO=1.7
+  - DJANGO=1.8
 matrix:
   exclude:
     - python: "2.6"
-      env: DJANGO=1.7 RUNNER="python" SUCCESS="echo DONE"
+      env: DJANGO=1.7
     - python: "2.6"
-      env: DJANGO=1.8 RUNNER="python" SUCCESS="echo DONE"
+      env: DJANGO=1.8
 install:
   - pip install -q Django==$DJANGO
   - pip install -r dev_requirements.txt
   - python setup.py install
 script:
-  - $RUNNER test_app/manage.py test djqscsv_tests
+  - coverage run --source=djqscsv test_app/manage.py test djqscsv_tests
+  - flake8 --exclude=migrations djqscsv/ test_app/
 after_success:
-  - $SUCCESS
+  - coveralls

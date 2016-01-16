@@ -1,6 +1,4 @@
-
-import djqscsv
-from models import Person
+from djqscsv_tests.context import djqscsv
 from .util import create_people_and_get_queryset
 
 

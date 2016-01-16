@@ -1,6 +1,5 @@
 from django.db.models import Count
 from django.test import TestCase
-from django.core.exceptions import ValidationError
 
 from django import VERSION as DJANGO_VERSION
 
@@ -16,7 +15,6 @@ from djqscsv_tests.util import create_people_and_get_queryset
 from django.utils import six
 
 if six.PY3:
-    from functools import filter
     from io import StringIO
 else:
     from StringIO import StringIO
@@ -284,6 +282,7 @@ class ExtraOrderingTests(CSVTestCase):
         self.assertQuerySetBecomesCsv(
             self.qs, csv_with_extra,
             field_header_map={'Most Powerful': 'Sturdiest'})
+
 
 class RenderToCSVResponseTests(CSVTestCase):
 

@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 import datetime
 
+from operator import attrgetter
+
 from django.test import TestCase
 from django.core.exceptions import ValidationError
+
+from django.utils.encoding import python_2_unicode_compatible
 
 from djqscsv_tests.context import djqscsv
 
@@ -81,9 +85,8 @@ class SanitizeUnicodeRecordTests(TestCase):
     def test_sanitize_date_with_bad_formatter(self):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1973, 5, 13)}
-        formatter = lambda d: d.day
         with self.assertRaises(AttributeError):
-            djqscsv._sanitize_unicode_record(formatter, record)
+            djqscsv._sanitize_unicode_record(attrgetter('day'), record)
 
 
 class AppendDatestampTests(TestCase):
@@ -120,15 +123,14 @@ class GenerateFilenameTests(TestCase):
 class SafeUtf8EncodeTest(TestCase):
     def test_safe_utf8_encode(self):
 
+        @python_2_unicode_compatible
         class Foo(object):
-            def __unicode__(self):
+            def __str__(self):
                 return u'¯\_(ツ)_/¯'
-            def __str_(self):
-                return self.__unicode__().encode('utf-8')
 
         for val in (u'¯\_(ツ)_/¯', 'plain', r'raw',
-                    b'123', 11312312312313L, False,
-                    datetime.datetime(2001, 01, 01),
+                    b'123', 11312312312313, False,
+                    datetime.datetime(2001, 1, 1),
                     4, None, [], set(), Foo):
 
             first_pass = djqscsv._safe_utf8_stringify(val)

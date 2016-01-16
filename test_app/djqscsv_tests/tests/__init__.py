@@ -1,2 +1,2 @@
-from test_csv_creation import *
-from test_utilities import *
+from djqscsv_tests.tests.test_csv_creation import *  # NOQA
+from djqscsv_tests.tests.test_utilities import *  # NOQA
