@@ -5,13 +5,6 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.http import HttpResponse
 
-from django.conf import settings
-if not settings.configured:
-    # required to import ValuesQuerySet
-    settings.configure()  # pragma: no cover
-
-from django.db.models.query import ValuesQuerySet
-
 from django.utils import six
 
 """ A simple python package for turning django models into csvs """
@@ -74,24 +67,44 @@ def write_csv(queryset, file_obj, **kwargs):
 
     # the CSV must always be built from a values queryset
     # in order to introspect the necessary fields.
-    if isinstance(queryset, ValuesQuerySet):
+    # However, repeated calls to values can expose fields that were not
+    # present in the original qs. If using `values` as a way to
+    # scope field permissions, this is unacceptable. The solution
+    # is to make sure values is called *once*.
+
+    # perform an string check to avoid a non-existent class in certain
+    # versions
+    if type(queryset).__name__ == 'ValuesQuerySet':
         values_qs = queryset
     else:
-        values_qs = queryset.values()
+        # could be a non-values qs, or could be django 1.9+
+        iterable_class = getattr(queryset, '_iterable_class', object)
+        if iterable_class.__name__ == 'ValuesIterable':
+            values_qs = queryset
+        else:
+            values_qs = queryset.values()
 
     try:
-        field_names = values_qs.field_names
-
+        field_names = values_qs.query.values_select
     except AttributeError:
-        # in django1.5, empty querysets trigger
-        # this exception, but not django 1.6
-        raise CSVException("Empty queryset provided to exporter.")
+        try:
+            field_names = values_qs.field_names
+        except AttributeError:
+            # in django1.5, empty querysets trigger
+            # this exception, but not django 1.6
+            raise CSVException("Empty queryset provided to exporter.")
 
     extra_columns = list(values_qs.query.extra_select)
     if extra_columns:
         field_names += extra_columns
 
-    aggregate_columns = list(values_qs.query.aggregate_select)
+    try:
+        aggregate_columns = list(values_qs.query.annotation_select)
+    except AttributeError:
+        # this gets a deprecation warning in django 1.9 but is
+        # required in django<=1.7
+        aggregate_columns = list(values_qs.query.aggregate_select)
+
     if aggregate_columns:
         field_names += aggregate_columns
 
