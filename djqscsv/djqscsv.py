@@ -70,7 +70,7 @@ def write_csv(queryset, file_obj, **kwargs):
             csv_kwargs[key] = val
 
     # add BOM to support CSVs in MS Excel (for Windows only)
-    file_obj.write(_safe_utf8_stringify(u'\ufeff'))
+    file_obj.write(_safe_utf8_stringify(six.text_type('\ufeff')))
 
     # the CSV must always be built from a values queryset
     # in order to introspect the necessary fields.
@@ -134,7 +134,7 @@ def generate_filename(queryset, append_datestamp=False):
     Takes a queryset and returns a default
     base filename based on the underlying model
     """
-    base_filename = slugify(unicode(queryset.model.__name__)) + '_export.csv'
+    base_filename = slugify(six.text_type(queryset.model.__name__)) + '_export.csv'
 
     if append_datestamp:
         base_filename = _append_datestamp(base_filename)
@@ -154,17 +154,17 @@ def _validate_and_clean_filename(filename):
         else:
             filename = filename[:-4]
 
-    filename = slugify(unicode(filename)) + '.csv'
+    filename = slugify(six.text_type(filename)) + '.csv'
     return filename
 
 
 def _safe_utf8_stringify(value):
     if isinstance(value, str):
         return value
-    elif isinstance(value, unicode):
+    elif isinstance(value, six.text_type):
         return value.encode('utf-8')
     else:
-        return unicode(value).encode('utf-8')
+        return six.text_type(value).encode('utf-8')
 
 
 def _sanitize_unicode_record(field_serializer_map, record):
@@ -175,7 +175,7 @@ def _sanitize_unicode_record(field_serializer_map, record):
         if isinstance(value, datetime.datetime):
             return value.isoformat()
         else:
-            return unicode(value)
+            return six.text_type(value)
 
     obj = {}
     for key, val in six.iteritems(record):
