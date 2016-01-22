@@ -1,5 +1,6 @@
 from .models import Person, Activity
 
+
 def create_people_and_get_queryset():
     doing_magic, _ = Activity.objects.get_or_create(name="Doing Magic")
     resting, _ = Activity.objects.get_or_create(name="Resting")

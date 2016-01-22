@@ -1,7 +1,6 @@
-from django.conf.urls import patterns, include, url
-import views
+from django.conf.urls import url
+from djqscsv_tests import views
 
-urlpatterns = patterns(
-    '',
-    url(r'^get_csv/', views.get_csv, name='get_csv'),
+urlpatterns = (
+    url(r'^$', views.get_csv, name='get_csv'),
 )

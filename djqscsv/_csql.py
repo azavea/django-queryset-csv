@@ -6,8 +6,10 @@ Used internally, subject to change without notice.
 This module may later be officially supported.
 """
 
+
 def _identity(x):
     return x
+
 
 def _transform(dataset, arg):
     if isinstance(arg, str):
@@ -43,6 +45,7 @@ def EXCLUDE(dataset, *args):
 
 def CONSTANT(value, display_name):
     return (None, display_name, lambda x: value)
-    
+
+
 def AS(field, display_name):
     return (field, display_name, _identity)

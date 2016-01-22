@@ -88,3 +88,9 @@ views.py::
       return render_to_csv_response(people, delimiter='|')
 
 For more details on possible arguments, see the documentation on `DictWriter <https://docs.python.org/2/library/csv.html#csv.DictWriter>`_.
+
+
+development and contributions
+-----------------------------
+
+Please read the included ``CONTRIBUTING.rst`` file.
