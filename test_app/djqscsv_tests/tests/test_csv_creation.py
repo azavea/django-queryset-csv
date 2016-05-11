@@ -12,12 +12,7 @@ from djqscsv_tests.context import SELECT, EXCLUDE, AS, CONSTANT
 
 from djqscsv_tests.util import create_people_and_get_queryset
 
-from django.utils import six
-
-if six.PY3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from django.utils.six import StringIO
 
 
 class CSVTestCase(TestCase):
