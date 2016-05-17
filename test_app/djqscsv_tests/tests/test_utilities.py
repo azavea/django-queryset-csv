@@ -51,16 +51,16 @@ class SanitizeUnicodeRecordTests(TestCase):
                   'nickname': u'\ufeffThe White Lady of Gont'}
         sanitized = djqscsv._sanitize_unicode_record({}, record)
         self.assertEqual(sanitized,
-                         {'name': 'Tenar',
-                          'nickname': '\xef\xbb\xbfThe White Lady of Gont'})
+                         {b'name': b'Tenar',
+                          b'nickname': b'\xef\xbb\xbfThe White Lady of Gont'})
 
     def test_sanitize_date(self):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1, 1, 1)}
         sanitized = djqscsv._sanitize_unicode_record({}, record)
         self.assertEqual(sanitized,
-                         {'name': 'Tenar',
-                          'created': '0001-01-01T00:00:00'})
+                         {b'name': b'Tenar',
+                          b'created': b'0001-01-01T00:00:00'})
 
     def test_sanitize_date_with_non_string_formatter(self):
         """
@@ -71,7 +71,7 @@ class SanitizeUnicodeRecordTests(TestCase):
         record = {'name': 'Tenar'}
         serializer = {'name': lambda d: len(d)}
         sanitized = djqscsv._sanitize_unicode_record(serializer, record)
-        self.assertEqual(sanitized, {'name': '5'})
+        self.assertEqual(sanitized, {b'name': b'5'})
 
     def test_sanitize_date_with_formatter(self):
         record = {'name': 'Tenar',
@@ -79,8 +79,8 @@ class SanitizeUnicodeRecordTests(TestCase):
         serializer = {'created': lambda d: d.strftime('%Y-%m-%d')}
         sanitized = djqscsv._sanitize_unicode_record(serializer, record)
         self.assertEqual(sanitized,
-                         {'name': 'Tenar',
-                          'created': '1973-05-13'})
+                         {b'name': b'Tenar',
+                          b'created': b'1973-05-13'})
 
     def test_sanitize_date_with_bad_formatter(self):
         record = {'name': 'Tenar',

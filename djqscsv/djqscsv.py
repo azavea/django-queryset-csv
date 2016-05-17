@@ -173,9 +173,9 @@ def _validate_and_clean_filename(filename):
 
 
 def _safe_utf8_stringify(value):
-    if isinstance(value, six.binary_type):
+    if isinstance(value, six.string_types):
         return value
-    elif isinstance(value, six.text_type):
+    elif isinstance(value, six.binary_type):
         return value.encode('utf-8')
     else:
         return six.text_type(value).encode('utf-8')
