@@ -3,8 +3,8 @@ from django.test import TestCase
 
 from django import VERSION as DJANGO_VERSION
 
-import csv
-import itertools
+import unicodecsv as csv
+from io import BytesIO
 
 from djqscsv_tests.context import djqscsv
 
@@ -12,7 +12,7 @@ from djqscsv_tests.context import SELECT, EXCLUDE, AS, CONSTANT
 
 from djqscsv_tests.util import create_people_and_get_queryset
 
-from django.utils.six import StringIO
+from django.utils.six.moves import zip_longest
 
 
 class CSVTestCase(TestCase):
@@ -22,15 +22,14 @@ class CSVTestCase(TestCase):
 
     def csv_match(self, csv_file, expected_data, **csv_kwargs):
         assertion_results = []
-        csv_data = csv.reader(csv_file, **csv_kwargs)
+        csv_data = csv.reader(csv_file, encoding='utf-8', **csv_kwargs)
         iteration_happened = False
         is_first = True
-        test_pairs = itertools.izip_longest(csv_data, expected_data,
-                                            fillvalue=[])
+        test_pairs = list(zip_longest(csv_data, expected_data, fillvalue=[]))
         for csv_row, expected_row in test_pairs:
             if is_first:
                 # add the BOM to the data
-                expected_row = (['\xef\xbb\xbf' + expected_row[0]] +
+                expected_row = ([u'\ufeff' + expected_row[0]] +
                                 expected_row[1:])
                 is_first = False
             iteration_happened = True
@@ -49,14 +48,14 @@ class CSVTestCase(TestCase):
         self.assertFalse(all(assertion_results))
 
     def assertQuerySetBecomesCsv(self, qs, expected_data, **kwargs):
-        obj = StringIO()
+        obj = BytesIO()
         djqscsv.write_csv(qs, obj, **kwargs)
-        csv_file = filter(None, obj.getvalue().split('\n'))
+        csv_file = filter(None, obj.getvalue().splitlines())
         self.assertMatchesCsv(csv_file, expected_data)
 
     def assertEmptyQuerySetMatches(self, expected_data, **kwargs):
         qs = self.qs.none()
-        obj = StringIO()
+        obj = BytesIO()
         if DJANGO_VERSION[:2] == (1, 5):
             with self.assertRaises(djqscsv.CSVException):
                 djqscsv.write_csv(qs, obj)
@@ -114,7 +113,7 @@ class WriteCSVDataNoVerboseNamesTests(CSVTestCase):
 
     def test_empty_queryset_no_verbose(self):
         self.assertEmptyQuerySetMatches(
-            '\xef\xbb\xbfid,name,address,info,hobby_id,born\r\n',
+            b'\xef\xbb\xbfid,name,address,info,hobby_id,born\r\n',
             use_verbose_names=False)
 
 
@@ -129,8 +128,8 @@ class WriteCSVDataTests(CSVTestCase):
 
     def test_empty_queryset(self):
         self.assertEmptyQuerySetMatches(
-            '\xef\xbb\xbfID,Person\'s name,address,'
-            'Info on Person,hobby_id,born\r\n')
+            b'\xef\xbb\xbfID,Person\'s name,address,'
+            b'Info on Person,hobby_id,born\r\n')
 
 
 class FieldHeaderMapTests(CSVTestCase):
@@ -169,8 +168,8 @@ class FieldHeaderMapTests(CSVTestCase):
 
     def test_empty_queryset_custom_headers(self):
         self.assertEmptyQuerySetMatches(
-            '\xef\xbb\xbfID,Person\'s name,'
-            'address,INFORMATION,hobby_id,born\r\n',
+            b'\xef\xbb\xbfID,Person\'s name,'
+            b'address,INFORMATION,hobby_id,born\r\n',
             field_header_map={'info': 'INFORMATION'})
 
 
@@ -296,7 +295,7 @@ class RenderToCSVResponseTests(CSVTestCase):
         response = djqscsv.render_to_csv_response(self.qs,
                                                   use_verbose_names=False)
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertMatchesCsv(response.content.split('\n'),
+        self.assertMatchesCsv(response.content.splitlines(),
                               self.FULL_PERSON_CSV_NO_VERBOSE)
 
         self.assertRegexpMatches(response['Content-Disposition'],
@@ -307,7 +306,7 @@ class RenderToCSVResponseTests(CSVTestCase):
                                                   filename="test_csv",
                                                   use_verbose_names=False)
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertMatchesCsv(response.content.split('\n'),
+        self.assertMatchesCsv(response.content.splitlines(),
                               self.FULL_PERSON_CSV_NO_VERBOSE)
 
     def test_render_to_csv_response_other_delimiter(self):
@@ -317,7 +316,7 @@ class RenderToCSVResponseTests(CSVTestCase):
                                                   delimiter='|')
 
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertMatchesCsv(response.content.split('\n'),
+        self.assertMatchesCsv(response.content.splitlines(),
                               self.FULL_PERSON_CSV_NO_VERBOSE,
                               delimiter="|")
 
@@ -328,5 +327,5 @@ class RenderToCSVResponseTests(CSVTestCase):
                                                   delimiter='|')
 
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertNotMatchesCsv(response.content.split('\n'),
+        self.assertNotMatchesCsv(response.content.splitlines(),
                                  self.FULL_PERSON_CSV_NO_VERBOSE)

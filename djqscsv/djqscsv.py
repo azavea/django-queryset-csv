@@ -1,5 +1,6 @@
-import csv
 import datetime
+
+import unicodecsv as csv
 
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
@@ -56,14 +57,14 @@ def write_csv(queryset, file_obj, **kwargs):
     use_verbose_names = kwargs.get('use_verbose_names', True)
     field_order = kwargs.get('field_order', None)
 
-    csv_kwargs = {}
+    csv_kwargs = {'encoding': 'utf-8'}
 
     for key, val in six.iteritems(kwargs):
         if key not in DJQSCSV_KWARGS:
             csv_kwargs[key] = val
 
     # add BOM to support CSVs in MS Excel (for Windows only)
-    file_obj.write(_safe_utf8_stringify(u'\ufeff'))
+    file_obj.write(b'\xef\xbb\xbf')
 
     # the CSV must always be built from a values queryset
     # in order to introspect the necessary fields.
@@ -133,8 +134,6 @@ def write_csv(queryset, file_obj, **kwargs):
         merged_header_map.update(dict((k, k) for k in extra_columns))
     merged_header_map.update(field_header_map)
 
-    merged_header_map = dict((k, _safe_utf8_stringify(v))
-                             for (k, v) in merged_header_map.items())
     writer.writerow(merged_header_map)
 
     for record in values_qs:
@@ -172,15 +171,6 @@ def _validate_and_clean_filename(filename):
     return filename
 
 
-def _safe_utf8_stringify(value):
-    if isinstance(value, six.string_types):
-        return value
-    elif isinstance(value, six.binary_type):
-        return value.encode('utf-8')
-    else:
-        return six.text_type(value).encode('utf-8')
-
-
 def _sanitize_unicode_record(field_serializer_map, record):
 
     def _serialize_value(value):
@@ -196,7 +186,11 @@ def _sanitize_unicode_record(field_serializer_map, record):
         if val is not None:
             serializer = field_serializer_map.get(key, _serialize_value)
             newval = serializer(val)
-            obj[_safe_utf8_stringify(key)] = _safe_utf8_stringify(newval)
+            # If the user provided serializer did not produce a string,
+            # coerce it to a string
+            if not isinstance(newval, six.text_type):
+                newval = six.text_type(newval)
+            obj[key] = newval
 
     return obj
 
