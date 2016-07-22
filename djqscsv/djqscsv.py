@@ -137,7 +137,7 @@ def write_csv(queryset, file_obj, **kwargs):
     writer.writerow(merged_header_map)
 
     for record in values_qs:
-        record = _sanitize_unicode_record(field_serializer_map, record)
+        record = _sanitize_record(field_serializer_map, record)
         writer.writerow(record)
 
 
@@ -171,7 +171,7 @@ def _validate_and_clean_filename(filename):
     return filename
 
 
-def _sanitize_unicode_record(field_serializer_map, record):
+def _sanitize_record(field_serializer_map, record):
 
     def _serialize_value(value):
         # provide default serializer for the case when

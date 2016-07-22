@@ -47,7 +47,7 @@ class SanitizeUnicodeRecordTests(TestCase):
     def test_sanitize(self):
         record = {'name': 'Tenar',
                   'nickname': u'\ufeffThe White Lady of Gont'}
-        sanitized = djqscsv._sanitize_unicode_record({}, record)
+        sanitized = djqscsv._sanitize_record({}, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
                           'nickname': u'\ufeffThe White Lady of Gont'})
@@ -55,7 +55,7 @@ class SanitizeUnicodeRecordTests(TestCase):
     def test_sanitize_date(self):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1, 1, 1)}
-        sanitized = djqscsv._sanitize_unicode_record({}, record)
+        sanitized = djqscsv._sanitize_record({}, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
                           'created': '0001-01-01T00:00:00'})
@@ -68,14 +68,14 @@ class SanitizeUnicodeRecordTests(TestCase):
         """
         record = {'name': 'Tenar'}
         serializer = {'name': lambda d: len(d)}
-        sanitized = djqscsv._sanitize_unicode_record(serializer, record)
+        sanitized = djqscsv._sanitize_record(serializer, record)
         self.assertEqual(sanitized, {'name': '5'})
 
     def test_sanitize_date_with_formatter(self):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1973, 5, 13)}
         serializer = {'created': lambda d: d.strftime('%Y-%m-%d')}
-        sanitized = djqscsv._sanitize_unicode_record(serializer, record)
+        sanitized = djqscsv._sanitize_record(serializer, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
                           'created': '1973-05-13'})
@@ -84,7 +84,7 @@ class SanitizeUnicodeRecordTests(TestCase):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1973, 5, 13)}
         with self.assertRaises(AttributeError):
-            djqscsv._sanitize_unicode_record(attrgetter('day'), record)
+            djqscsv._sanitize_record(attrgetter('day'), record)
 
 
 class AppendDatestampTests(TestCase):
