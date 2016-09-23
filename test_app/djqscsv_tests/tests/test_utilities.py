@@ -6,8 +6,6 @@ from operator import attrgetter
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
-from django.utils.encoding import python_2_unicode_compatible
-
 from djqscsv_tests.context import djqscsv
 
 from djqscsv_tests.util import create_people_and_get_queryset
@@ -49,15 +47,15 @@ class SanitizeUnicodeRecordTests(TestCase):
     def test_sanitize(self):
         record = {'name': 'Tenar',
                   'nickname': u'\ufeffThe White Lady of Gont'}
-        sanitized = djqscsv._sanitize_unicode_record({}, record)
+        sanitized = djqscsv._sanitize_record({}, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
-                          'nickname': '\xef\xbb\xbfThe White Lady of Gont'})
+                          'nickname': u'\ufeffThe White Lady of Gont'})
 
     def test_sanitize_date(self):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1, 1, 1)}
-        sanitized = djqscsv._sanitize_unicode_record({}, record)
+        sanitized = djqscsv._sanitize_record({}, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
                           'created': '0001-01-01T00:00:00'})
@@ -70,14 +68,14 @@ class SanitizeUnicodeRecordTests(TestCase):
         """
         record = {'name': 'Tenar'}
         serializer = {'name': lambda d: len(d)}
-        sanitized = djqscsv._sanitize_unicode_record(serializer, record)
+        sanitized = djqscsv._sanitize_record(serializer, record)
         self.assertEqual(sanitized, {'name': '5'})
 
     def test_sanitize_date_with_formatter(self):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1973, 5, 13)}
         serializer = {'created': lambda d: d.strftime('%Y-%m-%d')}
-        sanitized = djqscsv._sanitize_unicode_record(serializer, record)
+        sanitized = djqscsv._sanitize_record(serializer, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
                           'created': '1973-05-13'})
@@ -86,7 +84,7 @@ class SanitizeUnicodeRecordTests(TestCase):
         record = {'name': 'Tenar',
                   'created': datetime.datetime(1973, 5, 13)}
         with self.assertRaises(AttributeError):
-            djqscsv._sanitize_unicode_record(attrgetter('day'), record)
+            djqscsv._sanitize_record(attrgetter('day'), record)
 
 
 class AppendDatestampTests(TestCase):
@@ -118,24 +116,3 @@ class GenerateFilenameTests(TestCase):
 
         self.assertRegexpMatches(djqscsv.generate_filename(qs, True),
                                  r'person_export_[0-9]{8}.csv')
-
-
-class SafeUtf8EncodeTest(TestCase):
-    def test_safe_utf8_encode(self):
-
-        @python_2_unicode_compatible
-        class Foo(object):
-            def __str__(self):
-                return u'¯\_(ツ)_/¯'
-
-        for val in (u'¯\_(ツ)_/¯', 'plain', r'raw',
-                    b'123', 11312312312313, False,
-                    datetime.datetime(2001, 1, 1),
-                    4, None, [], set(), Foo):
-
-            first_pass = djqscsv._safe_utf8_stringify(val)
-            second_pass = djqscsv._safe_utf8_stringify(first_pass)
-            third_pass = djqscsv._safe_utf8_stringify(second_pass)
-            self.assertEqual(first_pass, second_pass)
-            self.assertEqual(second_pass, third_pass)
-            self.assertEqual(type(first_pass), type(third_pass))

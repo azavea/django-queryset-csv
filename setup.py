@@ -23,5 +23,5 @@ setup(
         "Framework :: Django",
         "License :: OSI Approved :: GNU General Public License (GPL)"
     ],
-    install_requires=['django>=1.5'],
+    install_requires=['django>=1.5', 'unicodecsv>=0.14.1'],
 )
