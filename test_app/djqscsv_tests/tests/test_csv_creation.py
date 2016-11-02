@@ -298,8 +298,9 @@ class RenderToCSVResponseTests(CSVTestCase):
         response = djqscsv.render_to_csv_response(self.qs,
                                                   use_verbose_names=False)
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertMatchesCsv(response.content.splitlines(),
-                              self.FULL_PERSON_CSV_NO_VERBOSE)
+        self.assertMatchesCsv(
+            b''.join(response.streaming_content).splitlines(),
+            self.FULL_PERSON_CSV_NO_VERBOSE)
 
         self.assertRegexpMatches(response['Content-Disposition'],
                                  r'attachment; filename=person_export.csv;')
@@ -308,6 +309,16 @@ class RenderToCSVResponseTests(CSVTestCase):
         response = djqscsv.render_to_csv_response(self.qs,
                                                   filename="test_csv",
                                                   use_verbose_names=False)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertMatchesCsv(
+            b''.join(response.streaming_content).splitlines(),
+            self.FULL_PERSON_CSV_NO_VERBOSE)
+
+    def test_render_to_csv_response_non_streaming(self):
+        response = djqscsv.render_to_csv_response(self.qs,
+                                                  filename="test_csv",
+                                                  use_verbose_names=False,
+                                                  streaming=False)
         self.assertEqual(response['Content-Type'], 'text/csv')
         self.assertMatchesCsv(response.content.splitlines(),
                               self.FULL_PERSON_CSV_NO_VERBOSE)
@@ -319,9 +330,10 @@ class RenderToCSVResponseTests(CSVTestCase):
                                                   delimiter='|')
 
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertMatchesCsv(response.content.splitlines(),
-                              self.FULL_PERSON_CSV_NO_VERBOSE,
-                              delimiter="|")
+        self.assertMatchesCsv(
+            b''.join(response.streaming_content).splitlines(),
+            self.FULL_PERSON_CSV_NO_VERBOSE,
+            delimiter="|")
 
     def test_render_to_csv_fails_on_delimiter_mismatch(self):
         response = djqscsv.render_to_csv_response(self.qs,
@@ -330,5 +342,6 @@ class RenderToCSVResponseTests(CSVTestCase):
                                                   delimiter='|')
 
         self.assertEqual(response['Content-Type'], 'text/csv')
-        self.assertNotMatchesCsv(response.content.splitlines(),
-                                 self.FULL_PERSON_CSV_NO_VERBOSE)
+        self.assertNotMatchesCsv(
+            b''.join(response.streaming_content).splitlines(),
+            self.FULL_PERSON_CSV_NO_VERBOSE)

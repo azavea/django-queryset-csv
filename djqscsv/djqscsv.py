@@ -4,7 +4,7 @@ import unicodecsv as csv
 
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 
 from django.utils import six
 
@@ -12,14 +12,22 @@ from django.utils import six
 
 # Keyword arguments that will be used by this module
 # the rest will be passed along to the csv writer
-DJQSCSV_KWARGS = {'field_header_map': None,
-                  'field_serializer_map': None,
-                  'use_verbose_names': True,
-                  'field_order': None}
+DJQSCSV_KWARGS = {
+    'field_header_map', 'field_serializer_map', 'use_verbose_names',
+    'field_order', 'streaming'}
 
 
 class CSVException(Exception):
     pass
+
+
+class _Echo(object):
+    """An object that implements just the write method of the file-like
+    interface.
+    """
+    def write(self, value):
+        """Write the value by returning it, instead of storing in a buffer."""
+        return value
 
 
 def render_to_csv_response(queryset, filename=None, append_datestamp=False,
@@ -36,19 +44,34 @@ def render_to_csv_response(queryset, filename=None, append_datestamp=False,
         filename = generate_filename(queryset,
                                      append_datestamp=append_datestamp)
 
-    response = HttpResponse(content_type='text/csv')
+    response_args = {'content_type': 'text/csv'}
+
+    if not kwargs.get('streaming', True):
+        response = HttpResponse(**response_args)
+        write_csv(queryset, response, **kwargs)
+    else:
+        response = StreamingHttpResponse(
+            _iter_csv(queryset, _Echo(), **kwargs), **response_args)
+
     response['Content-Disposition'] = 'attachment; filename=%s;' % filename
     response['Cache-Control'] = 'no-cache'
-
-    write_csv(queryset, response, **kwargs)
 
     return response
 
 
 def write_csv(queryset, file_obj, **kwargs):
     """
+    Writes CSV data to a file object based on the contents of the queryset.
+    """
+    # Force iteration over all rows so they all get written to the file
+    for _ in _iter_csv(queryset, file_obj, **kwargs):
+        pass
+
+
+def _iter_csv(queryset, file_obj, **kwargs):
+    """
     The main worker function. Writes CSV data to a file object based on the
-    contents of the queryset.
+    contents of the queryset and yields each row.
     """
 
     # process keyword arguments to pull out the ones used by this function
@@ -64,7 +87,7 @@ def write_csv(queryset, file_obj, **kwargs):
             csv_kwargs[key] = val
 
     # add BOM to support CSVs in MS Excel (for Windows only)
-    file_obj.write(b'\xef\xbb\xbf')
+    yield file_obj.write(b'\xef\xbb\xbf')
 
     # the CSV must always be built from a values queryset
     # in order to introspect the necessary fields.
@@ -86,25 +109,17 @@ def write_csv(queryset, file_obj, **kwargs):
             values_qs = queryset.values()
 
     try:
+        # Django 1.9+
         field_names = values_qs.query.values_select
     except AttributeError:
-        try:
-            field_names = values_qs.field_names
-        except AttributeError:
-            # in django1.5, empty querysets trigger
-            # this exception, but not django 1.6
-            raise CSVException("Empty queryset provided to exporter.")
+        # Django 1.8
+        field_names = values_qs.field_names
 
     extra_columns = list(values_qs.query.extra_select)
     if extra_columns:
         field_names += extra_columns
 
-    try:
-        aggregate_columns = list(values_qs.query.annotation_select)
-    except AttributeError:
-        # this gets a deprecation warning in django 1.9 but is
-        # required in django<=1.7
-        aggregate_columns = list(values_qs.query.aggregate_select)
+    aggregate_columns = list(values_qs.query.annotation_select)
 
     if aggregate_columns:
         field_names += aggregate_columns
@@ -134,11 +149,11 @@ def write_csv(queryset, file_obj, **kwargs):
         merged_header_map.update(dict((k, k) for k in extra_columns))
     merged_header_map.update(field_header_map)
 
-    writer.writerow(merged_header_map)
+    yield writer.writerow(merged_header_map)
 
     for record in values_qs:
         record = _sanitize_record(field_serializer_map, record)
-        writer.writerow(record)
+        yield writer.writerow(record)
 
 
 def generate_filename(queryset, append_datestamp=False):
