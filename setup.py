@@ -1,17 +1,14 @@
 from setuptools import setup, find_packages
 
-author = 'Steve Lamb'
-author_email = 'slamb@azavea.com'
-
 setup(
     name='django-queryset-csv',
-    version='0.3.3',
+    version='1.0.0',
     description='A simple python module for writing querysets to csv',
     long_description=open('README.rst').read(),
-    author=author,
-    author_email=author_email,
-    maintainer=author,
-    maintainer_email=author_email,
+    author='Steve Lamb',
+    author_email='slamb@azavea.com',
+    maintainer='Michael Maurizi',
+    maintainer_email='mmaurizi@azavea.com',
     url='http://github.com/azavea/django-queryset-csv',
     packages=find_packages(exclude=('test_app',)),
     keywords="django queryset csv",
