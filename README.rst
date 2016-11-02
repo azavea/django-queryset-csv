@@ -27,13 +27,13 @@ installation
 Run::
 
    pip install django-queryset-csv
-   
-Supports Python 2.6 and 2.7, Django >= 1.5.
+
+Supports Python 2.7 and 3.5, Django >= 1.8.
 
 usage
 -----
 Perform all filtering and field authorization in your view using ``.filter()`` and ``.values()``.
-Then, use ``render_to_csv_response`` to turn a queryset into a respone with a CSV attachment.
+Then, use ``render_to_csv_response`` to turn a queryset into a response with a CSV attachment.
 Pass it a ``QuerySet`` or ``ValuesQuerySet`` instance::
 
   from djqscsv import render_to_csv_response
@@ -41,6 +41,14 @@ Pass it a ``QuerySet`` or ``ValuesQuerySet`` instance::
   def csv_view(request):
     qs = Foo.objects.filter(bar=True).values('id', 'bar')
     return render_to_csv_response(qs)
+
+If you need to write the CSV to a file you can use ``write_csv`` instead::
+
+  from djqscsv import write_csv
+
+  qs = Foo.objects.filter(bar=True).values('id', 'bar')
+  with open('foo.csv', 'w') as csv_file:
+    write_csv(qs, csv_file)
 
 foreign keys
 ------------
@@ -76,6 +84,10 @@ This module exports two functions that write CSVs, ``render_to_csv_response`` an
 - ``field_serializer_map`` - (default: ``{}``) A dictionary mapping names of model fields to functions that serialize them to text. For example, ``{'created': (lambda x: x.strftime('%Y/%m/%d')) }`` will serialize a datetime field called ``created``.
 - ``use_verbose_names`` - (default: ``True``) A boolean determining whether to use the django field's ``verbose_name``, or to use it's regular field name as a column header. Note that if a given field is found in the ``field_header_map``, this value will take precendence.
 - ``field_order`` - (default: ``None``) A list of fields to determine the sort order. This list need not be complete: any fields not specified will follow those in the list with the order they would have otherwise used.
+
+In addition to the above arguments, ``render_to_csv_response`` takes the following optional keyword argument:
+
+- ``streaming`` - (default: ``True``) A boolean determining whether to use ``StreamingHttpResponse`` instead of the normal ``HttpResponse``.
 
 The remaining keyword arguments are *passed through* to the csv writer. For example, you can export a CSV with a different delimiter.
 
