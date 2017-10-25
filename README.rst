@@ -47,7 +47,7 @@ If you need to write the CSV to a file you can use ``write_csv`` instead::
   from djqscsv import write_csv
 
   qs = Foo.objects.filter(bar=True).values('id', 'bar')
-  with open('foo.csv', 'w') as csv_file:
+  with open('foo.csv', 'wb') as csv_file:
     write_csv(qs, csv_file)
 
 foreign keys
