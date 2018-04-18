@@ -110,7 +110,7 @@ def _iter_csv(queryset, file_obj, **kwargs):
 
     try:
         # Django 1.9+
-        field_names = values_qs.query.values_select
+        field_names = list(values_qs.query.values_select)
     except AttributeError:
         # Django 1.8
         field_names = values_qs.field_names
