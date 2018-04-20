@@ -4,9 +4,6 @@
 .. image:: https://coveralls.io/repos/azavea/django-queryset-csv/badge.svg?branch=master&service=github
    :target: https://coveralls.io/r/azavea/django-queryset-csv/
 
-.. image:: https://img.shields.io/pypi/dm/Django.svg
-   :target: http://pypi.python.org/pypi/django-queryset-csv/
-
 .. image:: https://img.shields.io/pypi/v/django-queryset-csv.svg
    :target: http://pypi.python.org/pypi/django-queryset-csv/
 
