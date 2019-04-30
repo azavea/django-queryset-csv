@@ -14,7 +14,7 @@ from django.utils import six
 # the rest will be passed along to the csv writer
 DJQSCSV_KWARGS = {
     'field_header_map', 'field_serializer_map', 'use_verbose_names',
-    'field_order', 'streaming'}
+    'field_order'}
 
 
 class CSVException(Exception):
@@ -31,7 +31,7 @@ class _Echo(object):
 
 
 def render_to_csv_response(queryset, filename=None, append_datestamp=False,
-                           **kwargs):
+                           streaming=True, **kwargs):
     """
     provides the boilerplate for making a CSV http response.
     takes a filename or generates one from the queryset's model.
@@ -46,7 +46,7 @@ def render_to_csv_response(queryset, filename=None, append_datestamp=False,
 
     response_args = {'content_type': 'text/csv'}
 
-    if not kwargs.get('streaming', True):
+    if not streaming:
         response = HttpResponse(**response_args)
         write_csv(queryset, response, **kwargs)
     else:
