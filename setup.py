@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-queryset-csv',
-    version='1.0.1',
+    version='1.0.2',
     description='A simple python module for writing querysets to csv',
     long_description=open('README.rst').read(),
     author='Steve Lamb',
