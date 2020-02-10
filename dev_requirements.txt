@@ -2,4 +2,5 @@ coveralls==0.3
 coverage==3.6
 flake8==2.5.1
 django>=1.5
+six==1.14.0
 unicodecsv>=0.14.1

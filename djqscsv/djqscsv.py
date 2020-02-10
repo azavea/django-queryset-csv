@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.http import HttpResponse, StreamingHttpResponse
 
-from django.utils import six
+import six
 
 """ A simple python package for turning django models into csvs """
 
