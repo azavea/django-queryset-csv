@@ -4,7 +4,9 @@ sudo: false
 
 python:
   - 2.7
-  - 3.5
+  - 3.6
+  - 3.7
+  - 3.8
 
 env:
   - DJANGO=1.8
@@ -12,11 +14,20 @@ env:
   - DJANGO=1.10
   - DJANGO=1.11
   - DJANGO=2.0
+  - DJANGO=2.1
+  - DJANGO=2.2
+  - DJANGO=3.0
 
 matrix:
   exclude:
     - python: 2.7
       env: DJANGO=2.0
+    - python: 2.7
+      env: DJANGO=2.1
+    - python: 2.7
+      env: DJANGO=2.2
+    - python: 2.7
+      env: DJANGO=3.0
     - python: 3.5
       env: DJANGO=1.6
     - python: 3.5
@@ -41,5 +52,6 @@ deploy:
     secure: Wb3ow0qdnjFsdIoC2Lvke0Rp6h40WNDkp4Fuyltd0ex2MQMglNo1qHZYlhQvJ/5q7pHEAO7pIqOMzOQ1mls9Za1/AoolEl3zm9b3oW86bAR8AVS/UdCUkkCmPaO+0VsYCt63McaLFA0xQnWxA7kZUkfEeS7RBhT63f+diPqg2fU=
   on:
     tags: true
+    python: 3.7
     distributions: sdist bdist_wheel
     repo: azavea/django-queryset-csv

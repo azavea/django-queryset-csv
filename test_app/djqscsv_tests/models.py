@@ -1,7 +1,7 @@
+from six import python_2_unicode_compatible
 from django.db import models
 
 from django.utils.translation import ugettext as _
-from django.utils.encoding import python_2_unicode_compatible
 from datetime import datetime
 
 SOME_TIME = datetime(2001, 1, 1, 1, 1)

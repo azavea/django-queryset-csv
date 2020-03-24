@@ -13,9 +13,12 @@ from djqscsv_tests.context import SELECT, EXCLUDE, AS, CONSTANT
 from djqscsv_tests.util import create_people_and_get_queryset
 
 try:
-    from django.utils.six.moves import zip_longest
+    from six.moves import zip_longest
 except ImportError:
-    from itertools import izip_longest as zip_longest
+    try:
+        from itertools import izip_longest as zip_longest
+    except ImportError:
+        from itertools import zip_longest
 
 
 class CSVTestCase(TestCase):
