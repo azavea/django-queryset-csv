@@ -12,9 +12,9 @@ a CSV exporter for django querysets.
 This tool was created out of repeatedly needing to do the following in django:
 
 1. write CSV data that is based on simple querysets.
-2. automatically encode unicode characters to utf-8
-3. create a shortcut to render a queryset to a CSV HTTP response
-4. add a time/datestamping mechanism to CSV filenames
+2. automatically encode unicode characters to utf-8.
+3. create a shortcut to render a queryset to a CSV HTTP response.
+4. add a time/datestamping mechanism to CSV filenames.
 
 For more detailed documentation, please read `this blog post. <http://www.azavea.com/blogs/labs/2014/03/exporting-django-querysets-to-csv/>`_
 
