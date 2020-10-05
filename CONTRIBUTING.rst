@@ -30,6 +30,7 @@ demo testing
 to ensure the app behaves as expected, run the following::
 
   $ cd test_app
+  $ python manage.py migrate
   $ python manage.py runserver
 
 then, visit ``http://localhost:8000/`` in your browser and confirm it produces a valid CSV.

@@ -14,7 +14,7 @@ import six
 # the rest will be passed along to the csv writer
 DJQSCSV_KWARGS = {
     'field_header_map', 'field_serializer_map', 'use_verbose_names',
-    'field_order'}
+    'field_order', 'custom_none_name'}
 
 
 class CSVException(Exception):
@@ -78,6 +78,7 @@ def _iter_csv(queryset, file_obj, **kwargs):
     field_header_map = kwargs.get('field_header_map', {})
     field_serializer_map = kwargs.get('field_serializer_map', {})
     use_verbose_names = kwargs.get('use_verbose_names', True)
+    custom_none_name = kwargs.get('custom_none_name', None)
     field_order = kwargs.get('field_order', None)
 
     csv_kwargs = {'encoding': 'utf-8'}
@@ -152,7 +153,8 @@ def _iter_csv(queryset, file_obj, **kwargs):
     yield writer.writerow(merged_header_map)
 
     for record in values_qs:
-        record = _sanitize_record(field_serializer_map, record)
+        record = _sanitize_record(field_serializer_map, record,
+                                  custom_none_name)
         yield writer.writerow(record)
 
 
@@ -186,7 +188,7 @@ def _validate_and_clean_filename(filename):
     return filename
 
 
-def _sanitize_record(field_serializer_map, record):
+def _sanitize_record(field_serializer_map, record, custom_none_name):
 
     def _serialize_value(value):
         # provide default serializer for the case when
@@ -201,11 +203,16 @@ def _sanitize_record(field_serializer_map, record):
         if val is not None:
             serializer = field_serializer_map.get(key, _serialize_value)
             newval = serializer(val)
+            # If the user provided None
+            if newval is None:
+                newval = custom_none_name
             # If the user provided serializer did not produce a string,
             # coerce it to a string
             if not isinstance(newval, six.text_type):
                 newval = six.text_type(newval)
             obj[key] = newval
+        elif custom_none_name:
+            obj[key] = custom_none_name
 
     return obj
 
