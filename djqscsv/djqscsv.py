@@ -6,8 +6,6 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from django.http import HttpResponse, StreamingHttpResponse
 
-import six
-
 """ A simple python package for turning django models into csvs """
 
 # Keyword arguments that will be used by this module
@@ -21,7 +19,7 @@ class CSVException(Exception):
     pass
 
 
-class _Echo(object):
+class _Echo:
     """An object that implements just the write method of the file-like
     interface.
     """
@@ -82,7 +80,7 @@ def _iter_csv(queryset, file_obj, **kwargs):
 
     csv_kwargs = {'encoding': 'utf-8'}
 
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key not in DJQSCSV_KWARGS:
             csv_kwargs[key] = val
 
@@ -108,12 +106,7 @@ def _iter_csv(queryset, file_obj, **kwargs):
         else:
             values_qs = queryset.values()
 
-    try:
-        # Django 1.9+
-        field_names = list(values_qs.query.values_select)
-    except AttributeError:
-        # Django 1.8
-        field_names = values_qs.field_names
+    field_names = list(values_qs.query.values_select)
 
     extra_columns = list(values_qs.query.extra_select)
     if extra_columns:
@@ -136,17 +129,17 @@ def _iter_csv(queryset, file_obj, **kwargs):
 
     # verbose_name defaults to the raw field name, so in either case
     # this will produce a complete mapping of field names to column names
-    name_map = dict((field, field) for field in field_names)
+    name_map = {field: field for field in field_names}
     if use_verbose_names:
         name_map.update(
-            dict((field.name, field.verbose_name)
-                 for field in queryset.model._meta.fields
-                 if field.name in field_names))
+            {field.name: field.verbose_name
+                for field in queryset.model._meta.fields
+                if field.name in field_names})
 
     # merge the custom field headers into the verbose/raw defaults, if provided
     merged_header_map = name_map.copy()
     if extra_columns:
-        merged_header_map.update(dict((k, k) for k in extra_columns))
+        merged_header_map.update({k: k for k in extra_columns})
     merged_header_map.update(field_header_map)
 
     yield writer.writerow(merged_header_map)
@@ -161,7 +154,7 @@ def generate_filename(queryset, append_datestamp=False):
     Takes a queryset and returns a default
     base filename based on the underlying model
     """
-    base_filename = slugify(six.text_type(queryset.model.__name__)) \
+    base_filename = slugify(str(queryset.model.__name__)) \
         + '_export.csv'
 
     if append_datestamp:
@@ -182,7 +175,7 @@ def _validate_and_clean_filename(filename):
         else:
             filename = filename[:-4]
 
-    filename = slugify(six.text_type(filename)) + '.csv'
+    filename = slugify(str(filename)) + '.csv'
     return filename
 
 
@@ -194,17 +187,17 @@ def _sanitize_record(field_serializer_map, record):
         if isinstance(value, datetime.datetime):
             return value.isoformat()
         else:
-            return six.text_type(value)
+            return str(value)
 
     obj = {}
-    for key, val in six.iteritems(record):
+    for key, val in record.items():
         if val is not None:
             serializer = field_serializer_map.get(key, _serialize_value)
             newval = serializer(val)
             # If the user provided serializer did not produce a string,
             # coerce it to a string
-            if not isinstance(newval, six.text_type):
-                newval = six.text_type(newval)
+            if not isinstance(newval, str):
+                newval = str(newval)
             obj[key] = newval
 
     return obj
@@ -222,4 +215,4 @@ def _append_datestamp(filename):
         raise ValidationError('cannot datestamp unvalidated filename')
 
     formatted_datestring = datetime.date.today().strftime("%Y%m%d")
-    return '%s_%s.csv' % (filename[:-4], formatted_datestring)
+    return f'{filename[:-4]}_{formatted_datestring}.csv'

@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/azavea/django-queryset-csv.png
-   :target: https://travis-ci.org/azavea/django-queryset-csv/
+.. image:: https://github.com/azavea/django-queryset-csv/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/azavea/django-queryset-csv/actions/workflows/ci.yml
 
 .. image:: https://coveralls.io/repos/azavea/django-queryset-csv/badge.svg?branch=master&service=github
    :target: https://coveralls.io/r/azavea/django-queryset-csv/
@@ -16,7 +16,7 @@ This tool was created out of repeatedly needing to do the following in django:
 3. create a shortcut to render a queryset to a CSV HTTP response.
 4. add a time/datestamping mechanism to CSV filenames.
 
-For more detailed documentation, please read `this blog post. <http://www.azavea.com/blogs/labs/2014/03/exporting-django-querysets-to-csv/>`_
+For more detailed documentation, please read `this blog post. <https://element84.com/software-engineering/exporting-django-querysets-to-csv/>`_
 
 Installation
 ------------
@@ -25,7 +25,7 @@ Run::
 
    pip install django-queryset-csv
 
-Supports Python 2.7 and 3.5, Django >= 1.8.
+Supports Python >= 3.9, Django >= 4.2.
 
 Usage
 -----
@@ -97,7 +97,7 @@ views.py::
       people = Person.objects.values('name', 'favorite_food__name')
       return render_to_csv_response(people, delimiter='|')
 
-For more details on possible arguments, see the documentation on `DictWriter <https://docs.python.org/2/library/csv.html#csv.DictWriter>`_.
+For more details on possible arguments, see the documentation on `DictWriter <https://docs.python.org/3/library/csv.html#csv.DictWriter>`_.
 
 
 Development and contributions

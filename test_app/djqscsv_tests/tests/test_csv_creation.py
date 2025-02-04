@@ -1,8 +1,6 @@
 from django.db.models import Count
 from django.test import TestCase
 
-from django import VERSION as DJANGO_VERSION
-
 import unicodecsv as csv
 from io import BytesIO
 
@@ -11,14 +9,7 @@ from djqscsv_tests.context import djqscsv
 from djqscsv_tests.context import SELECT, EXCLUDE, AS, CONSTANT
 
 from djqscsv_tests.util import create_people_and_get_queryset
-
-try:
-    from six.moves import zip_longest
-except ImportError:
-    try:
-        from itertools import izip_longest as zip_longest
-    except ImportError:
-        from itertools import zip_longest
+from itertools import zip_longest
 
 
 class CSVTestCase(TestCase):
@@ -26,7 +17,7 @@ class CSVTestCase(TestCase):
     def setUp(self):
         self.qs = create_people_and_get_queryset()
 
-    def csv_match(self, csv_file, expected_data, **csv_kwargs):
+    def csvMatch(self, csv_file, expected_data, **csv_kwargs):
         assertion_results = []
         csv_data = csv.reader(csv_file, encoding='utf-8', **csv_kwargs)
         iteration_happened = False
@@ -35,22 +26,21 @@ class CSVTestCase(TestCase):
         for csv_row, expected_row in test_pairs:
             if is_first:
                 # add the BOM to the data
-                expected_row = ([u'\ufeff' + expected_row[0]] +
+                expected_row = (['\ufeff' + expected_row[0]] +
                                 expected_row[1:])
                 is_first = False
             iteration_happened = True
             assertion_results.append(csv_row == expected_row)
 
         assertion_results.append(iteration_happened is True)
-
         return assertion_results
 
     def assertMatchesCsv(self, *args, **kwargs):
-        assertion_results = self.csv_match(*args, **kwargs)
+        assertion_results = self.csvMatch(*args, **kwargs)
         self.assertTrue(all(assertion_results))
 
     def assertNotMatchesCsv(self, *args, **kwargs):
-        assertion_results = self.csv_match(*args, **kwargs)
+        assertion_results = self.csvMatch(*args, **kwargs)
         self.assertFalse(all(assertion_results))
 
     def assertQuerySetBecomesCsv(self, qs, expected_data, **kwargs):
@@ -62,19 +52,14 @@ class CSVTestCase(TestCase):
     def assertEmptyQuerySetMatches(self, expected_data, **kwargs):
         qs = self.qs.none()
         obj = BytesIO()
-        if DJANGO_VERSION[:2] == (1, 5):
-            with self.assertRaises(djqscsv.CSVException):
-                djqscsv.write_csv(qs, obj)
-        else:
-            djqscsv.write_csv(qs, obj,
-                              **kwargs)
-            self.assertEqual(obj.getvalue(), expected_data)
+        djqscsv.write_csv(qs, obj, **kwargs)
+        self.assertEqual(obj.getvalue(), expected_data)
 
     # the csv data that is returned by the most inclusive query under test.
     # use this data structure to build smaller data sets
     BASE_CSV = [
         ['id', 'name', 'address',
-         'info', 'hobby_id', 'born', 'hobby__name', 'Most Powerful'],
+         'info', 'hobby_id', 'born', 'hobby__name', 'most_powerful'],
         ['1', 'vetch', 'iffish',
          'wizard', '1', '2001-01-01T01:01:00', 'Doing Magic', '0'],
         ['2', 'nemmerle', 'roke',
@@ -96,7 +81,7 @@ class CSVTestCase(TestCase):
 
     FULL_PERSON_CSV_NO_VERBOSE = EXCLUDE(BASE_CSV,
                                          'hobby__name',
-                                         'Most Powerful')
+                                         'most_powerful')
 
     LIMITED_PERSON_CSV = SELECT(FULL_PERSON_CSV,
                                 'Person\'s name', 'address', 'Info on Person')
@@ -242,7 +227,8 @@ class ExtraOrderingTests(CSVTestCase):
 
     def setUp(self):
         self.qs = create_people_and_get_queryset().extra(
-            select={'Most Powerful': "info LIKE '%arch mage%'"})
+            select={"most_powerful": "info LIKE '%%arch mage%'"},
+        )
 
     def test_extra_select(self):
         csv_with_extra = SELECT(self.BASE_CSV,
@@ -252,14 +238,14 @@ class ExtraOrderingTests(CSVTestCase):
                                 AS('info', 'Info on Person'),
                                 'hobby_id',
                                 'born',
-                                'Most Powerful')
+                                'most_powerful')
 
         self.assertQuerySetBecomesCsv(self.qs, csv_with_extra)
 
     def test_extra_select_ordering(self):
         custom_order_csv = SELECT(self.BASE_CSV,
                                   AS('id', 'ID'),
-                                  'Most Powerful',
+                                  'most_powerful',
                                   AS('name', "Person's name"),
                                   'address',
                                   AS('info', 'Info on Person'),
@@ -267,7 +253,7 @@ class ExtraOrderingTests(CSVTestCase):
                                   'born')
 
         self.assertQuerySetBecomesCsv(self.qs, custom_order_csv,
-                                      field_order=['id', 'Most Powerful'])
+                                      field_order=['id', 'most_powerful'])
 
     def test_extra_select_header_map(self):
         csv_with_extra = SELECT(self.BASE_CSV,
@@ -277,11 +263,11 @@ class ExtraOrderingTests(CSVTestCase):
                                 AS('info', 'Info on Person'),
                                 'hobby_id',
                                 'born',
-                                AS('Most Powerful', 'Sturdiest'))
+                                AS('most_powerful', 'Sturdiest'))
 
         self.assertQuerySetBecomesCsv(
             self.qs, csv_with_extra,
-            field_header_map={'Most Powerful': 'Sturdiest'})
+            field_header_map={"most_powerful": "Sturdiest"})
 
 
 class RenderToCSVResponseTests(CSVTestCase):
@@ -293,7 +279,7 @@ class RenderToCSVResponseTests(CSVTestCase):
                                                   filename=filename,
                                                   append_datestamp=True)
 
-        self.assertRegexpMatches(
+        self.assertRegex(
             response['Content-Disposition'],
             r'attachment; filename=the_reach_[0-9]{8}.csv;')
 
@@ -305,8 +291,8 @@ class RenderToCSVResponseTests(CSVTestCase):
             b''.join(response.streaming_content).splitlines(),
             self.FULL_PERSON_CSV_NO_VERBOSE)
 
-        self.assertRegexpMatches(response['Content-Disposition'],
-                                 r'attachment; filename=person_export.csv;')
+        self.assertRegex(response['Content-Disposition'],
+                         r'attachment; filename=person_export.csv;')
 
     def test_render_to_csv_response(self):
         response = djqscsv.render_to_csv_response(self.qs,

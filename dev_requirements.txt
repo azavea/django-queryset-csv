@@ -1,6 +1,5 @@
 coveralls==0.3
 coverage==5.0.4
-flake8==3.7.9
-django>=1.5
-six==1.14.0
+flake8==7.1.1
+django>=4.2
 unicodecsv>=0.14.1

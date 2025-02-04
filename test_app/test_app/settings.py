@@ -1,4 +1,3 @@
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -15,3 +14,5 @@ INSTALLED_APPS = ('djqscsv_tests',)
 ROOT_URLCONF = 'djqscsv_tests.urls'
 
 DEBUG = True
+
+USE_TZ = False

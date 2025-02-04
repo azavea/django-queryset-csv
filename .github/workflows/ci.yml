@@ -1,0 +1,54 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+name: CI
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python:
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
+          - '3.13'
+        django:
+          - '4.2'
+          - '5.0'
+          - '5.1'
+    name: Python ${{ matrix.python }} / Django ${{ matrix.django }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Setup django ${{ matrix.django }}
+        run: pip install "django<=${{ matrix.django }}"
+      - name: Install dev requirements
+        run: pip install -r dev_requirements.txt
+      - name: Run coverage
+        run: coverage run --source=djqscsv test_app/manage.py test djqscsv_tests
+
+  check-formatting:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+        with:
+          exclude: "migrations"
+          path: "djqscsv/ test_app/"
+  

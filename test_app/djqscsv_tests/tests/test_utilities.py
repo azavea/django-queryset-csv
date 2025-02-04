@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 
 from operator import attrgetter
@@ -46,11 +45,11 @@ class ValidateCleanFilenameTests(TestCase):
 class SanitizeUnicodeRecordTests(TestCase):
     def test_sanitize(self):
         record = {'name': 'Tenar',
-                  'nickname': u'\ufeffThe White Lady of Gont'}
+                  'nickname': '\ufeffThe White Lady of Gont'}
         sanitized = djqscsv._sanitize_record({}, record)
         self.assertEqual(sanitized,
                          {'name': 'Tenar',
-                          'nickname': u'\ufeffThe White Lady of Gont'})
+                          'nickname': '\ufeffThe White Lady of Gont'})
 
     def test_sanitize_date(self):
         record = {'name': 'Tenar',
@@ -92,7 +91,7 @@ class AppendDatestampTests(TestCase):
     def test_clean_returns(self):
         filename = "the_reach.csv"
         stamped = djqscsv._append_datestamp(filename)
-        self.assertRegexpMatches(stamped, r'the_reach_[0-9]{8}.csv')
+        self.assertRegex(stamped, r'the_reach_[0-9]{8}.csv')
 
     def test_no_extension_raises(self):
         filename = "iffish"
@@ -114,5 +113,5 @@ class GenerateFilenameTests(TestCase):
         self.assertEqual(djqscsv.generate_filename(qs),
                          'person_export.csv')
 
-        self.assertRegexpMatches(djqscsv.generate_filename(qs, True),
-                                 r'person_export_[0-9]{8}.csv')
+        self.assertRegex(djqscsv.generate_filename(qs, True),
+                         r'person_export_[0-9]{8}.csv')
